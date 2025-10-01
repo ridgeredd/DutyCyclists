@@ -1,0 +1,25 @@
+## Setup
+
+The board being used is the ESP32 DEVKITC: https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32/esp32-devkitc/index.html
+
+An intro guide is available here: https://docs.espressif.com/projects/esp-idf/en/stable/esp32/get-started/index.html
+
+Espressif IDE's are available as plugins for VSCode and Eclipse per the above link. In VSCode, both ESP-IDF and ESP-IDF-Tools are required.
+
+To connect to the board, plug in, press Win + X on windows, select device manager, and determine which port the ESP is on under the Ports drop down. It will have a (COM#) sign at the end. The number shown is the port number. If ports does not show, click View -> Show hidden devices.
+
+In VSCode, hit Ctrl+Shift+P, select ESP-IDF: Configure ESP-IDF Extension. Select Express. Change version to 5.5.1 and select where you want to tools installed to. Click install, this will take a while.
+
+## New Project
+
+Ctrl-Shift-P, select ESP-IDF: Create New Project. Select esp32 for target, ESP32 chip (via ESP-PROG) for board, and choose the correct port. Choose one of the IDF templates such as hello world or blink.
+
+Note: compilation will likely fail if your path has spaces in it. If your user profile in /Users has a space in it, e.g. "Ridge Redding", create the project along a path that does not include "Users/Your Name"
+
+https://www.reddit.com/r/esp32/comments/1ikcsvc/what_espidf_board_should_i_use_for/
+
+Read the README file in the downloaded project more more information on how to proceed.
+
+## Run a Project
+
+Open a ESP-IDF terminal using Ctrl-Shift-P -> Open ESP-IDF Terminal. Set you target using "idf.py set-target esp32"
