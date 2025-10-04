@@ -1,1 +1,10 @@
+Rick Here:
 
+I finished up the PCB schematic for now....
+
+All that's left is wire connection, adding jumper pins everywhere for testing and maybe a few more components for it to work properly. Like a few capacitors, resistors and whatnot. For example, to smoothen out the DAC, Ridge attached an RC low pass filter to help the transient output look better. We don't need to worry much about that now since this is iteration 1, but once we start testing, we will.
+
+To copy the KiCAD files, go to Capstone PCB.zip on the main branch. You'll see an option to 'view raw'. Click that and it'll download onto your device. Save it somewhere, extract the files, and you should be able to open it up in KiCAD. If you make any changes, upload another iteration zip file as another file.
+
+
+Couldn't figure out version control on KiCAD, it exists but IdK how to access that.
