@@ -1,0 +1,21 @@
+# Ignore compiled or unnecessary files
+*.bin
+*.elf
+*.map
+*.log
+*.pyc
+__pycache__/
+*.o
+*.d
+
+# Ignore build folders
+esp32/build
+
+# Ignore IDE settings
+# esp32/.vscode
+
+# Ignore devcontainer
+# esp32/.devcontainer
+
+sdkconfig.old
+sdkconfig.ci
