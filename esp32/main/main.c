@@ -54,7 +54,7 @@ static volatile uint64_t last_tx_us = 0;         // Last transmission time
 #define PTT_INPUT_PIN                 GPIO_NUM_4
 #define PTT_OUTPUT_PIN                GPIO_NUM_5
 #define PTT_BUFFER_MS                 10        // amount of additional time you hold PTT high after transmission length
-#define PTT_ACTIVE_LVL                0         // active high (1) or low (0)
+#define PTT_ACTIVE_LVL                1         // active high (1) or low (0)
 #define PTT_INACTIVE_LVL              !PTT_ACTIVE_LVL
 
 #if PTT_ACTIVE_LVL
@@ -64,6 +64,8 @@ static volatile uint64_t last_tx_us = 0;         // Last transmission time
     #define PTT_PRESS_INTR            EDGE_FALLING
     #define PTT_RELEASE_INTR          EDGE_RISING
 #endif         
+
+#define DAC_AMPLITUDE_V                1.0    // Must be within [0, 3.3]
 
 #if AUTOMATIC_TRANSMISSION
 static TimerHandle_t auto_gps_timer = NULL;         // automatically requests a gps send at regular intervals
@@ -88,18 +90,17 @@ static void encode_words(uint32_t *words, uint32_t nwords, int16_t *buf) {
     while (1) {
 
         int next_switch = SAMPLES_PER_SYMBOL - count; // Ensure that the buffer length is less than the samples per symbol
-        // TODO: don't do this because samples per symbol may not be an integer
         for (int i = 0; i < BUF_LEN; i++) {
 
-            float val = cosf(phase);                              // cos wave with 1 amplitude
-            uint8_t u8 = (uint8_t)((val * 0.5f + 0.5f) * 255);    // cast to byte for DAC
+            float val = cosf(phase);                              // cos wave with amplitude 1
+            uint8_t u8 = (uint8_t)((val * 0.5f + 0.5f) * (255 * (DAC_AMPLITUDE_V / 3.3)));    // normalize to byte between 0 and level corresponding to max voltage
             buf[2 * i] = (int16_t)(u8 << 8);                    // Top byte gets fed to DAC
             buf[2 * i + 1] = 0;                                 // Required for mono
 
             // Swap frequency mid buffer
             if (i == next_switch) {
 
-                // increment bits; TODO: optionally don't send all the bits of last word
+                // increment bits
                 if (bit_idx < 32) {
                     word = word >> BITS_PER_SYMBOL;
                     freq = SYMBOL_FREQS[word & SYMBOL_MASK];
@@ -109,13 +110,12 @@ static void encode_words(uint32_t *words, uint32_t nwords, int16_t *buf) {
                 else {
                     if (word_idx == nwords - 1) { // transmission finished
                         i2s_write(I2S_NUM_0, buf, 2 * (i + 1) * sizeof(int16_t), &written, portMAX_DELAY); 
-                        //vTaskDelete(NULL);
                         return;
                     }
                     else {
                         word_idx++;
                         word = words[word_idx];
-                        freq = SYMBOL_FREQS[word & SYMBOL_MASK]; // out of bounds exception
+                        freq = SYMBOL_FREQS[word & SYMBOL_MASK];
                         bit_idx = BITS_PER_SYMBOL;
                     }
                 }
