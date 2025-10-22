@@ -45,7 +45,8 @@ static const float SYMBOL_FREQS[NSYMBOLS]   = { 1200.0f, 2200.0f }; // symbol fr
 
 #define AUTOMATIC_TRANSMISSION       0           // 1 enables 0 disables auto transmission at regular interval
 #define TIMER_DELAY_MS               10000       // milliseconds before resending signal
-static volatile uint64_t last_tx_us = 0;         // Last transmission time
+static volatile uint64_t last_tx_ticks = 0;         // Last transmission time
+static volatile uint64_t last_isr_ticks = 0;
 
 #define PTT_INPUT_PIN                 GPIO_NUM_4
 #define PTT_OUTPUT_PIN                GPIO_NUM_5
@@ -76,6 +77,8 @@ static volatile uint64_t last_tx_us = 0;         // Last transmission time
 #define BAUD_RATE               SAMPLE_RATE / SAMPLES_PER_SYMBOL
 #define BIT_RATE                BAUD_RATE * BITS_PER_SYMBOL
 
+#define DEBOUNCE_MS             100          // ignore isr requests within some recent amount of time to debounce signal
+
 #if AUTOMATIC_TRANSMISSION
 static TimerHandle_t auto_gps_timer = NULL;         // automatically requests a gps send at regular intervals
 #endif
@@ -85,7 +88,7 @@ static TaskHandle_t send_gps_handle = NULL;         // task handle to request tr
 static void* rs_encoder = NULL;
 
 // Send a string of bytes; Sends symbols in little-endian
-// TODO: implement cosine look up table; Separate this into a different file
+// TODO: implement cosine look up table (possible with a phase update?); Separate this into a different file
 // TODO: issue. takes about twice as long
 static void tx_bytes(uint8_t *bytes, uint32_t nbytes, int16_t *buf){
 
@@ -206,6 +209,11 @@ static void disable_ptt_timer_callback() {
 // Spawns send gps task when ptt releases, or drives ptt active when ptt pushed
 static void IRAM_ATTR ptt_interrupt_handler() { 
 
+    uint64_t now_ticks = xTaskGetTickCountFromISR();
+    uint64_t elapsed_isr_ms = (now_ticks - last_isr_ticks) * portTICK_PERIOD_MS;
+    if (elapsed_isr_ms < DEBOUNCE_MS) return; // debounce
+    last_isr_ticks = now_ticks;
+
     BaseType_t hpw = pdFALSE;
 
     #if AUTOMATIC_TRANSMISSION // reset internal gps timer
@@ -218,9 +226,9 @@ static void IRAM_ATTR ptt_interrupt_handler() {
     if (level == PTT_ACTIVE_LVL) { gpio_set_level(PTT_OUTPUT_PIN, PTT_ACTIVE_LVL); }
     // ptt release -> send gps
     else { 
-        uint64_t now_us = esp_timer_get_time();
-        if ((now_us - last_tx_us) / 1000 < MIN_INTERVAL_MS) return;   // ignore too-soon interrupts
-        last_tx_us = now_us;
+        uint64_t elapsed_tx_ms = (now_ticks - last_tx_ticks) * portTICK_PERIOD_MS;
+        if (elapsed_tx_ms < MIN_INTERVAL_MS) return;   // ignore too-soon interrupts
+        last_tx_ticks = now_ticks;
         vTaskNotifyGiveFromISR(send_gps_handle, &hpw); 
     }
 
@@ -230,14 +238,16 @@ static void IRAM_ATTR ptt_interrupt_handler() {
 
 #if AUTOMATIC_TRANSMISSION
 // Spawns send gps task when timer callback occurs
+// TODO: use ticks not get_time
 static void gps_timer_callback() {
 
     int ptt_level = gpio_get_level(PTT_INPUT_PIN);
     if (ptt_level == PTT_ACTIVE_LVL) { return; } // if ptt currently active, abort
 
-    uint64_t now_us = esp_timer_get_time();
-    if ((now_us - last_tx_us) / 1000 < MIN_INTERVAL_MS) return;   // ignore too-soon interrupts
-    last_tx_us = now_us;
+    uint64_t now_ticks = xTaskGetTickCount();
+    uint64_t elapsed_tx_ms = (now_ticks - last_tx_ticks) * portTICK_PERIOD_MS;
+    if (elapsed_tx_ms < MIN_INTERVAL_MS) return;   // ignore too-soon interrupts
+    last_tx_ticks = now_ticks;
 
     gpio_set_level(PTT_OUTPUT_PIN, PTT_ACTIVE_LVL);
     xTaskNotifyGive(send_gps_handle);
@@ -276,7 +286,7 @@ static void config_dac() {
 static void config_ptt() {
 
     gpio_config_t ptt_in_conf = {
-        .intr_type = GPIO_INTR_POSEDGE,  // activates on rising edge
+        .intr_type = GPIO_INTR_ANYEDGE,  // activates on either edge
         .mode = GPIO_MODE_INPUT,
         .pin_bit_mask = (1ULL << PTT_INPUT_PIN),
         .pull_up_en = GPIO_PULLUP_ENABLE,   // enable for PTT

@@ -17,5 +17,6 @@ esp32/build
 # Ignore devcontainer
 # esp32/.devcontainer
 
-sdkconfig.old
-sdkconfig.ci
+esp32/sdkconfig.old
+esp32/sdkconfig.ci
+esp32/sdkconfig

@@ -22,4 +22,7 @@ Read the README file in the downloaded project more more information on how to p
 
 ## Run a Project
 
-Open a ESP-IDF terminal using Ctrl-Shift-P -> Open ESP-IDF Terminal. Set you target using "idf.py set-target esp32"
+Open a ESP-IDF terminal using Ctrl-Shift-P -> Open ESP-IDF Terminal.
+Cd to esp32 directory 
+Set you target using "idf.py set-target esp32". 
+Run using idf.py -p PORT flash monitor
