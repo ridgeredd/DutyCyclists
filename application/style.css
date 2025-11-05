@@ -35,3 +35,41 @@ h1 {
     display: block;
     margin: 0 auto;
 }
+
+.marker {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    background-color: red;
+    transform: translate(-50%, -50%);
+    display: block;
+    z-index: 10;
+    cursor: pointer;
+}
+
+.marker:hover {
+    background-color: darkred;
+}
+
+.marker-details {
+    position: absolute;
+    background-color: white;
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 5px;
+    z-index: 20;
+    display: none;
+}
+
+.marker-details::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid white;
+}
