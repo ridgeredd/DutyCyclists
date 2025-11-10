@@ -1,5 +1,5 @@
 const image = document.querySelector('.opacity-image');
-const marker = document.getElementById
+const markerDetails = document.getElementById('marker-details');
 
 // GPS coordinates of the four corners of the image
 const corners = [
@@ -15,6 +15,11 @@ function gpsToPixel(lat, lon){
     const botBorder = corners.bottom_left[0];
     const leftBorder = corners.top_left[1];
     const rightBorder = corners.top_right[1];
+
+    // const topBorder = 38.03524477143201;
+    // const botBorder = 38.03163992670867;
+    // const leftBorder = -78.51456138025434;
+    // const rightBorder = -78.50856396115098;
 
     const relativeX = (lon - leftBorder) / (rightBorder - leftBorder);
     const relativeY = (lat - topBorder) / (botBorder - topBorder);
@@ -44,15 +49,19 @@ function createMarker(id, lat, lon, timestamp) {
 
     marker.addEventListener('click', function(e) {
         e.stopPropagation();
-        showDetails(marker, id, lat, lon, timestamp);
+        showDetails(id, lat, lon, timestamp);
     });
+    
     image.parentElement.appendChild(marker);
     return marker;
 }
 
-function showDetails(marker, id, lat, lon, timestamp) {
-    infoPopup.style.display = 'block';
-    infoPopup.innerHTML = `
+
+
+
+function showDetails(id, lat, lon, timestamp) {
+    markerDetails.style.display = 'block';
+    markerDetails.innerHTML = `
         <h2>Marker Details</h2>
         <p>ID: ${id}</p>
         <p>Latitude: ${lat}</p>
@@ -65,24 +74,26 @@ function hideDetails() {
     infoPopup.style.display = 'none';
 }
 
-document.addEventListener('click', hideInfo);
+document.addEventListener('click', hideDetails);
 
 function createExampleMarkers() {
     createMarker('Center', 38.03344, -78.51190, 1124032021);
 }
 
-// Plot a sample coordinate when the image loads
-image.addEventListener('load', function() {
-    // sample point near center of the map
-    plotCoordinate(38.03344, -78.51190);
 
-});
+// Plot a sample coordinate when the image loads
+image.addEventListener('load', createExampleMarkers);
+
 
 window.addEventListener('resize', function() {
+    const existingMarkers = document.querySelectorAll('.marker');
+    existingMarkers.forEach(m => m.remove());
     // adjust marker position on window resize
     plotCoordinate(38.03344, -78.51190);
+    
+    createExampleMarkers();
 });
 
 if (image.complete) {
-    plotCoordinate(38.03344, -78.51190);
+    createExampleMarkers();
 }

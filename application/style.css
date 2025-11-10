@@ -36,40 +36,39 @@ h1 {
     margin: 0 auto;
 }
 
+.marker-container {
+    position: relative;
+    display: inline-block;
+}
+
 .marker {
-    position: absolute;
-    width: 15px;
-    height: 15px;
+    width: 20px;
+    height: 20px;
     background-color: red;
-    transform: translate(-50%, -50%);
-    display: block;
-    z-index: 10;
+    border-radius: 50%;
+    border: 2px solid white;
     cursor: pointer;
 }
 
 .marker:hover {
-    background-color: darkred;
-}
+    transform: scale(1.2);
+    transition: transform 0.2s;
+    background-color:darkred;
 
-.marker-details {
+}
+.tooltip {
     position: absolute;
-    background-color: white;
-    border: 1px solid #ccc;
-    padding: 10px;
-    border-radius: 5px;
-    z-index: 20;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    z-index: 15;
     display: none;
 }
 
-.marker-details::after {
-    content: '';
-    position: absolute;
-    bottom: -10px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 0;
-    height: 0;
-    border-left: 10px solid transparent;
-    border-right: 10px solid transparent;
-    border-top: 10px solid white;
+.marker-container:hover .tooltip {
+    opacity: 1;
+    visibility: visible;
+
 }
