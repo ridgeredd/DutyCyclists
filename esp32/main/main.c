@@ -21,6 +21,8 @@
 #include "driver/i2s.h"
 #include "driver/gpio.h"
 #include "rom/ets_sys.h"
+#include "soc/gpio_struct.h"
+
 
 #include "libfec/fec.h"
 
@@ -65,6 +67,7 @@ static volatile uint64_t last_isr_ticks = 0;
 #endif         
 
 #define DAC_AMPLITUDE_V                1.0    // Must be within [0, 3.3]
+#define MIN_DAC_V                      0.0    // band aid solution to dac voltage being clipped when ptt is high; 2 * dac amplitude + dac v must be < 5
 #define START_STOP                     0x7E   // starting and stopping condition
 
 #define PARITY_BYTES                   6      // These must sum to < 255
@@ -87,6 +90,14 @@ static TaskHandle_t send_gps_handle = NULL;         // task handle to request tr
 
 static void* rs_encoder = NULL;
 
+static int gps_tx = 0;                                     // whether or not gps is currently being transmitted
+
+static inline void clear_gpio_intr_status(gpio_num_t pin){
+    uint32_t m = 1u << (uint32_t)pin;
+    if (pin < 32) GPIO.status_w1tc = m;
+    else          GPIO.status1_w1tc.val = 1u << (pin - 32);
+}
+
 // Send a string of bytes; Sends symbols in little-endian
 // TODO: implement cosine look up table (possible with a phase update?); Separate this into a different file
 // TODO: issue. takes about twice as long
@@ -107,8 +118,9 @@ static void tx_bytes(uint8_t *bytes, uint32_t nbytes, int16_t *buf){
         int next_switch = SAMPLES_PER_SYMBOL - count; // Ensure that the buffer length is less than the samples per symbol
         for (int i = 0; i < BUF_LEN; i++) {
 
-            float val = cosf(phase);                              // cos wave with amplitude 1
-            uint8_t u8 = (uint8_t)((val * 0.5f + 0.5f) * (255 * (DAC_AMPLITUDE_V / 3.3)));    // normalize to byte between 0 and level corresponding to max voltage
+            float cos01 = 0.5f * cosf(phase) + 0.5f;                                    // cos wave between 0 and 1 with amplitude 0.5
+            float voltage = 2 * DAC_AMPLITUDE_V * cos01 + MIN_DAC_V;                    // use parameters to determine voltage to send at
+            uint8_t u8 = (uint8_t)(voltage * 255 / 3.3);                                // normalize to 0-255 byte to send
             buf[2 * i] = (int16_t)(u8 << 8);                    // Top byte gets fed to DAC
             buf[2 * i + 1] = 0;                                 // Required for mono
 
@@ -203,11 +215,22 @@ static void tx_gps_task() {
 // Resets ptt after gps transmission
 static void disable_ptt_timer_callback() {
     gpio_set_level(PTT_OUTPUT_PIN, PTT_INACTIVE_LVL);
+    clear_gpio_intr_status(PTT_INPUT_PIN);
+    gpio_intr_enable(PTT_INPUT_PIN);
+    gps_tx = 0;
 }
 
 
-// Spawns send gps task when ptt releases, or drives ptt active when ptt pushed
-static void IRAM_ATTR ptt_interrupt_handler() { 
+// Spawns send gps task when ptt releases
+static void IRAM_ATTR ptt_interrupt_handler() {
+    
+    // ignore this edge; this is from a gps transmit, not a ptt release
+    if (gps_tx == 1) { return; }
+
+    int level = gpio_get_level(PTT_INPUT_PIN);
+    if (level == 0) {
+        return;
+    }
 
     uint64_t now_ticks = xTaskGetTickCountFromISR();
     uint64_t elapsed_isr_ms = (now_ticks - last_isr_ticks) * portTICK_PERIOD_MS;
@@ -220,17 +243,17 @@ static void IRAM_ATTR ptt_interrupt_handler() {
         xTimerResetFromISR(auto_gps_timer, &hpw); 
     #endif 
 
-    int level = gpio_get_level(PTT_INPUT_PIN);
-
-    // ptt press -> forward ptt to radio
-    if (level == PTT_ACTIVE_LVL) { gpio_set_level(PTT_OUTPUT_PIN, PTT_ACTIVE_LVL); }
     // ptt release -> send gps
-    else { 
-        uint64_t elapsed_tx_ms = (now_ticks - last_tx_ticks) * portTICK_PERIOD_MS;
-        if (elapsed_tx_ms < MIN_INTERVAL_MS) return;   // ignore too-soon interrupts
-        last_tx_ticks = now_ticks;
-        vTaskNotifyGiveFromISR(send_gps_handle, &hpw); 
-    }
+    uint64_t elapsed_tx_ms = (now_ticks - last_tx_ticks) * portTICK_PERIOD_MS;
+    if (elapsed_tx_ms < MIN_INTERVAL_MS) return;   // ignore too-soon interrupts
+    last_tx_ticks = now_ticks;
+
+    gpio_intr_disable(PTT_INPUT_PIN); // disable interrupts on ptt
+    clear_gpio_intr_status(PTT_INPUT_PIN);
+    gps_tx = 1;
+
+
+    vTaskNotifyGiveFromISR(send_gps_handle, &hpw); 
 
     if (hpw) portYIELD_FROM_ISR();
 
@@ -286,10 +309,10 @@ static void config_dac() {
 static void config_ptt() {
 
     gpio_config_t ptt_in_conf = {
-        .intr_type = GPIO_INTR_ANYEDGE,  // activates on either edge
+        .intr_type = GPIO_INTR_POSEDGE,  // activates on rising edge
         .mode = GPIO_MODE_INPUT,
         .pin_bit_mask = (1ULL << PTT_INPUT_PIN),
-        .pull_up_en = GPIO_PULLUP_ENABLE,   // enable for PTT
+        .pull_up_en = GPIO_PULLUP_ENABLE,      // floats ptt. radio should also, but this works better
         .pull_down_en = GPIO_PULLDOWN_DISABLE
     };
     gpio_config(&ptt_in_conf);
@@ -362,6 +385,7 @@ void app_main(void) {
     printf("Transmission Time: %d ms\n", TRANSMISSION_TIME_MS);
     printf("Baud Rate: %d sym/sec\n", BAUD_RATE);
     printf("Bit Rate: %d bit/sec\n", BIT_RATE);
+    printf("DAC Range: %fV to %fV\n", MIN_DAC_V, MIN_DAC_V + 2 * DAC_AMPLITUDE_V);
     #if PTT_ACTIVE_LVL
         printf("PTT Active High\n");
     #else
