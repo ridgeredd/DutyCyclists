@@ -32,7 +32,7 @@ static const char *TAG = "gps_tx";
 #define BUF_LEN                 256                // frames per DAC buffer. 2 * 256 because stereo
 #define PI                      3.141592653589793f
 #define TX_LENGTH               10          // number of symbols being sent
-#define SAMPLES_PER_SYMBOL      1000
+#define SAMPLES_PER_SYMBOL      100
 
 #define BITS_PER_SYMBOL         1           // power of 2; will cause error if > 8 because using uint8
 #define NSYMBOLS                (1u << BITS_PER_SYMBOL)
@@ -75,10 +75,10 @@ static volatile uint64_t last_isr_ticks = 0;
     
 # define TRANSMISSION_BYTES             PAYLOAD_BYTES + PARITY_BYTES + 3
 
-#define TRANSMISSION_TIME_MS    (1000 * SAMPLES_PER_SYMBOL * 8 * TRANSMISSION_BYTES) / (BITS_PER_SYMBOL * SAMPLE_RATE)
-#define MIN_INTERVAL_MS         2 * TRANSMISSION_TIME_MS   // Don't allow transmissions within 2 * min interval of eachother 
-#define BAUD_RATE               SAMPLE_RATE / SAMPLES_PER_SYMBOL
-#define BIT_RATE                BAUD_RATE * BITS_PER_SYMBOL
+const float BAUD_RATE = SAMPLE_RATE / SAMPLES_PER_SYMBOL;
+const float BIT_RATE = BAUD_RATE * BITS_PER_SYMBOL;
+const float TRANSMISSION_TIME_MS = (8.0 * 1000.0 * TRANSMISSION_BYTES) / BIT_RATE;
+const float MIN_INTERVAL_MS = 2 * TRANSMISSION_TIME_MS;   // Don't allow transmissions within 2 * min interval of eachother 
 
 #define DEBOUNCE_MS             100          // ignore isr requests within some recent amount of time to debounce signal
 
@@ -382,9 +382,9 @@ static void NRZI(uint32_t *words, uint32_t nwords) {
 
 void app_main(void) {
 
-    printf("Transmission Time: %d ms\n", TRANSMISSION_TIME_MS);
-    printf("Baud Rate: %d sym/sec\n", BAUD_RATE);
-    printf("Bit Rate: %d bit/sec\n", BIT_RATE);
+    printf("Transmission Time: %f ms\n", TRANSMISSION_TIME_MS);
+    printf("Baud Rate: %f sym/sec\n", BAUD_RATE);
+    printf("Bit Rate: %f bit/sec\n", BIT_RATE);
     printf("DAC Range: %fV to %fV\n", MIN_DAC_V, MIN_DAC_V + 2 * DAC_AMPLITUDE_V);
     #if PTT_ACTIVE_LVL
         printf("PTT Active High\n");
