@@ -56,16 +56,16 @@ static bool nmea_to_deg(const char *field, const char *hemisphere, double *out_d
     double v = atof(field);
     int degrees = (int)(v / 100.0);
     double minutes = v - (degrees * 100.0);
-    double deg = degrees + minutes / 60.0;
+    double deg = degrees + (minutes / 60.0);
     if (hemisphere && hemisphere[0]) {
-        if (hemisphere[0] == 'S' || hemisphere[0] == 's') deg = -deg;
+        if (toupper((unsigned char)hemisphere[0]) == 'S') deg = -deg;
     }
     *out_deg = deg;
     return true;
 }
 
 /* small GGA parser: expects a NMEA line beginning with $GP/GN GGA */
-static bool parse_gga(const char *line, gnss_data_t *out)
+static bool parse_gll(const char *line, gnss_data_t *out)
 {
     // Copy to local buffer to use strtok safely
     char buf[160];
@@ -83,8 +83,8 @@ static bool parse_gga(const char *line, gnss_data_t *out)
     if (ti < 10) return false;
 
     /* usual tokens from a GNGGA sentence */
-        // tokens[0] = $GNGGA or $GPGGA
-        // tokens[1] = time (hhmmss.sss
+        // tokens[0] = $GNGGA
+        // tokens[1] = time hhmmss.sss
         // tokens[2] = latitude ddmm.mmmm
         // tokens[3] = North/South
         // tokens[4] = longitude dddmm.mmmm
@@ -93,14 +93,22 @@ static bool parse_gga(const char *line, gnss_data_t *out)
         // tokens[7] = number of satellites
         // tokens[9] = altitude (meters)
     
-    if (!tokens[2] || !tokens[4]) return false;
-    int fixq = atoi(tokens[6]);
-    if (fixq == 0) return false; // invalid
+    /* usual tokens from a GNGLL sentence */
+        // tokens[0] = $GNGLL
+        // tokens[1] = latitude ddmm.mmmm
+        // tokens[2] = North/South
+        // tokens[3] = longitude dddmm.mmmm
+        // tokens[4] = East/West
+        // tokens[5] = time hhmmss.sss
+        // tokens[6] = status A=valid, V=invalid
+        
+    if (!tokens[1] || !tokens[3]) return false;
+    if (tokens[6] == 'V') return false; // invalid
 
     gnss_data_t res = {0};
-    if (!nmea_to_deg(tokens[2], tokens[3], &res.latitude)) return false;
-    if (!nmea_to_deg(tokens[4], tokens[5], &res.longitude)) return false;
-    res.altitude = atof(tokens[9]);
+    if (!nmea_to_deg(tokens[1], tokens[2], &res.latitude)) return false;
+    if (!nmea_to_deg(tokens[3], tokens[4], &res.longitude)) return false;
+    // res.time = atof(tokens[5]); 
     res.valid = true;
     res.fix_age_ms = 0;
     *out = res;
@@ -148,7 +156,7 @@ static void gps_task(void *arg)
                                 gnss_data_t fix;
                                 if (parse_gga(linebuf, &fix)) {
                                     set_latest_fix(&fix);
-                                    ESP_LOGI(TAG, "GPS fix: lat=%.6f lon=%.6f alt=%.2f", fix.latitude, fix.longitude, fix.altitude);
+                                    ESP_LOGI(TAG, "GPS fix: lat=%.6f lon=%.6f", fix.latitude, fix.longitude);
                                 }
                             }
                         }

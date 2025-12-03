@@ -2,7 +2,7 @@
 
 typedef struct {
     double latitude;   // decimal degrees (+north, -south)
-    double longitude;  // decimal degrees (+east, -weset)
+    double longitude;  // decimal degrees (+east, -west)
     double altitude;   // meters
     bool valid;        // true if fix (location data) is valid & recent
     uint32_t fix_age_ms; // ms since the fix was received
