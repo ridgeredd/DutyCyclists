@@ -1,0 +1,1 @@
+/usr/bin/x86_64-w64-mingw32-gcc.exe  -mtune=generic -Wall -Wvla -ffast-math -ftree-vectorize -D_GNU_SOURCE  -fmax-errors=1 -DUSE_CM108 -O3 -DNDEBUG -Wl,--enable-auto-import CMakeFiles/log2gpx.dir/log2gpx.c.o CMakeFiles/log2gpx.dir/textcolor.c.o -o log2gpx.exe -Wl,--out-implib,liblog2gpx.dll.a -Wl,--major-image-version,0,--minor-image-version,0  -lm ../external/misc/libmisc.a -lm

@@ -1,0 +1,70 @@
+# This file will be configured to contain variables for CPack. These variables
+# should be set in the CMake list file of the project before CPack module is
+# included. The list of available CPACK_xxx variables and their associated
+# documentation may be obtained using
+#  cpack --help-variable-list
+#
+# Some variables are common to all generators (e.g. CPACK_PACKAGE_NAME)
+# and some are specific to a generator
+# (e.g. CPACK_NSIS_EXTRA_INSTALL_COMMANDS). The generator specific variables
+# usually begin with CPACK_<GENNAME>_xxxx.
+
+
+set(CPACK_BUILD_SOURCE_DIRS "/cygdrive/c/Capstone/DutyCyclists/decoder/direwolf_mod;/cygdrive/c/Capstone/DutyCyclists/decoder/direwolf_mod/build")
+set(CPACK_CMAKE_GENERATOR "Unix Makefiles")
+set(CPACK_COMPONENT_UNSPECIFIED_HIDDEN "TRUE")
+set(CPACK_COMPONENT_UNSPECIFIED_REQUIRED "TRUE")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libasound2,libgps23")
+set(CPACK_DEFAULT_PACKAGE_DESCRIPTION_FILE "/usr/share/cmake-4.1.3/Templates/CPack.GenericDescription.txt")
+set(CPACK_DEFAULT_PACKAGE_DESCRIPTION_SUMMARY "direwolf built using CMake")
+set(CPACK_DMG_SLA_USE_RESOURCE_FILE_LICENSE "ON")
+set(CPACK_GENERATOR "ZIP")
+set(CPACK_INNOSETUP_ARCHITECTURE "x64")
+set(CPACK_INSTALL_CMAKE_PROJECTS "/cygdrive/c/Capstone/DutyCyclists/decoder/direwolf_mod/build;direwolf;ALL;/")
+set(CPACK_INSTALL_PREFIX "/usr/local")
+set(CPACK_MODULE_PATH "/cygdrive/c/Capstone/DutyCyclists/decoder/direwolf_mod/cmake/modules")
+set(CPACK_NSIS_DISPLAY_NAME "direwolf 1.7.0Development")
+set(CPACK_NSIS_INSTALLER_ICON_CODE "")
+set(CPACK_NSIS_INSTALLER_MUI_ICON_CODE "")
+set(CPACK_NSIS_INSTALL_ROOT "$PROGRAMFILES")
+set(CPACK_NSIS_PACKAGE_NAME "direwolf 1.7.0Development")
+set(CPACK_NSIS_UNINSTALL_NAME "Uninstall")
+set(CPACK_OBJCOPY_EXECUTABLE "/usr/bin/x86_64-w64-mingw32-objcopy.exe")
+set(CPACK_OBJDUMP_EXECUTABLE "/usr/bin/x86_64-w64-mingw32-objdump.exe")
+set(CPACK_OUTPUT_CONFIG_FILE "/cygdrive/c/Capstone/DutyCyclists/decoder/direwolf_mod/build/CPackConfig.cmake")
+set(CPACK_PACKAGE_CONTACT "https://github.com/wb2osz/direwolf")
+set(CPACK_PACKAGE_DEFAULT_LOCATION "/")
+set(CPACK_PACKAGE_DESCRIPTION_FILE "/cygdrive/c/Capstone/DutyCyclists/decoder/direwolf_mod/README.md")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Dire Wolf is an AX.25 soundcard TNC, digipeater, APRS IGate, GPS tracker, and APRStt gateway")
+set(CPACK_PACKAGE_FILE_NAME "direwolf-1.7.0Development_i686")
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "direwolf 1.7.0Development")
+set(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "direwolf 1.7.0Development")
+set(CPACK_PACKAGE_NAME "direwolf")
+set(CPACK_PACKAGE_RELOCATABLE "true")
+set(CPACK_PACKAGE_VENDOR "Humanity")
+set(CPACK_PACKAGE_VERSION "1.7.0Development")
+set(CPACK_PACKAGE_VERSION_MAJOR "1")
+set(CPACK_PACKAGE_VERSION_MINOR "7")
+set(CPACK_PACKAGE_VERSION_PATCH "0")
+set(CPACK_READELF_EXECUTABLE "/usr/bin/x86_64-w64-mingw32-readelf.exe")
+set(CPACK_RESOURCE_FILE_LICENSE "/cygdrive/c/Capstone/DutyCyclists/decoder/direwolf_mod/LICENSE")
+set(CPACK_RESOURCE_FILE_README "/cygdrive/c/Capstone/DutyCyclists/decoder/direwolf_mod/README.md")
+set(CPACK_RESOURCE_FILE_WELCOME "/usr/share/cmake-4.1.3/Templates/CPack.GenericWelcome.txt")
+set(CPACK_SET_DESTDIR "OFF")
+set(CPACK_SOURCE_CYGWIN "ON")
+set(CPACK_SOURCE_GENERATOR "CygwinSource")
+set(CPACK_SOURCE_IGNORE_FILES "/cygdrive/c/Capstone/DutyCyclists/decoder/direwolf_mod/build;/.git/;.gitignore;menu.yml;.travis.yml;.appveyor.yml;default.nix;.envrc;TODOs.org;/.scripts/")
+set(CPACK_SOURCE_OUTPUT_CONFIG_FILE "/cygdrive/c/Capstone/DutyCyclists/decoder/direwolf_mod/build/CPackSourceConfig.cmake")
+set(CPACK_STRIP_FILES "true")
+set(CPACK_SYSTEM_NAME "CYGWIN")
+set(CPACK_THREADS "1")
+set(CPACK_TOPLEVEL_TAG "CYGWIN")
+set(CPACK_WIX_SIZEOF_VOID_P "8")
+
+if(NOT CPACK_PROPERTIES_FILE)
+  set(CPACK_PROPERTIES_FILE "/cygdrive/c/Capstone/DutyCyclists/decoder/direwolf_mod/build/CPackProperties.cmake")
+endif()
+
+if(EXISTS ${CPACK_PROPERTIES_FILE})
+  include(${CPACK_PROPERTIES_FILE})
+endif()
