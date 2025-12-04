@@ -1,0 +1,28 @@
+INFO
+- this is an altered version of direwolf https://github.com/wb2osz/direwolf/tree/master/src
+
+DIREWOLF CHANGES
+
+- redefined packet length in hdlc_rec2, hdlc_rec, rrdb
+- adding custom decoding in duty_cyclists_decoder
+- bypassed crc check (error detection) and multi_modem_process_rec_frame (sends frame for ax25) from try_decode2() in hdlc_rec2 
+
+TODO
+
+- create duty cyclists packet length
+- create custom decoding function called duty_cyclists_decode()
+- create a 
+
+Duty Cyclists packet standard:
+_________________________________________________________________________
+|               |               |               |                       |
+|   Byte 0      |   Bytes 1-5   |   Bytes 6-10  |   Bytes 11-XX         |
+|   Radio ID    |   Latitude    |   Longitude   |   Error Correction    |
+|_______________|_______________|_______________|_______________________|
+
+SETUP
+- follow instructions on page 26 of https://github.com/wb2osz/direwolf/blob/master/doc/User-Guide.pdf
+
+RUN
+- cd decoder/direwolf_mod/build
+- ./src/direwolf.exe
