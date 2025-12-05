@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "*.c": "c",
+        "u-blox_external_typedefs.h": "c"
+    },
+    "idf.flashType": "UART"
+}
