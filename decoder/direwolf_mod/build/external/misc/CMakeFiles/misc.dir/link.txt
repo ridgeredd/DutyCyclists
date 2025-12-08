@@ -1,2 +1,0 @@
-/usr/bin/x86_64-w64-mingw32-ar.exe qc libmisc.a CMakeFiles/misc.dir/strsep.c.o CMakeFiles/misc.dir/strtok_r.c.o CMakeFiles/misc.dir/strcasestr.c.o CMakeFiles/misc.dir/strlcpy.c.o CMakeFiles/misc.dir/strlcat.c.o
-/usr/bin/x86_64-w64-mingw32-ranlib.exe libmisc.a

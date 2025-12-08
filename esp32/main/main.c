@@ -32,12 +32,12 @@ static const char *TAG = "gps_tx";
 #define BUF_LEN                 256                // frames per DAC buffer. 2 * 256 because stereo
 #define PI                      3.141592653589793f
 #define TX_LENGTH               10          // number of symbols being sent
-#define SAMPLES_PER_SYMBOL      1000
+#define SAMPLES_PER_SYMBOL      400
 
 #define BITS_PER_SYMBOL         1           // power of 2; will cause error if > 8 because using uint8
 #define NSYMBOLS                (1u << BITS_PER_SYMBOL)
 
-static const float SYMBOL_FREQS[NSYMBOLS]   = { 1200.0f, 2200.0f }; // symbol frequencies in order of bit index
+static const float SYMBOL_FREQS[NSYMBOLS]   = { 2200.0f, 1200.0f }; // symbol frequencies in order of bit index
 
 #define SYMBOL_MASK             (NSYMBOLS - 1u)
 #define TRANSMISSION_FLAG       0x7E        // start/stop condition
@@ -45,18 +45,18 @@ static const float SYMBOL_FREQS[NSYMBOLS]   = { 1200.0f, 2200.0f }; // symbol fr
 #define CODEWORD_BITS           4           // how many bits are combined for RS code alphabet
 #define REDUNDANT_BITS          4           // how many bits are appended for error correction
 
-#define AUTOMATIC_TRANSMISSION       0           // 1 enables 0 disables auto transmission at regular interval
+#define AUTOMATIC_TRANSMISSION       1           // 1 enables 0 disables auto transmission at regular interval
 #define TIMER_DELAY_MS               10000       // milliseconds before resending signal
 static volatile uint64_t last_tx_ticks = 0;         // Last transmission time
 static volatile uint64_t last_isr_ticks = 0;
 
 #define PTT_INPUT_PIN                 GPIO_NUM_4
 #define PTT_OUTPUT_PIN                GPIO_NUM_5
-#define PTT_BUFFER_MS                 10        // amount of additional time you hold PTT high after transmission length
+#define PTT_BUFFER_MS                 100        // amount of additional time you hold PTT high after transmission length
 #define PTT_ACTIVE_LVL                0         // active high (1) or low (0)
 #define PTT_INACTIVE_LVL              1
 
-#define CALL_SIGN                     0x69      // unique id for this device
+#define CALL_SIGN                     0x67      // unique id for this device
 
 #if PTT_ACTIVE_LVL
     #define PTT_PRESS_INTR            EDGE_RISING // Press is rising edge     
@@ -67,18 +67,20 @@ static volatile uint64_t last_isr_ticks = 0;
 #endif         
 
 #define DAC_AMPLITUDE_V                1.0    // Must be within [0, 3.3]
-#define MIN_DAC_V                      0.0    // band aid solution to dac voltage being clipped when ptt is high; 2 * dac amplitude + dac v must be < 5
+#define MIN_DAC_V                      1.0    // band aid solution to dac voltage being clipped when ptt is high; 2 * dac amplitude + dac v must be < 5
 #define START_STOP                     0x7E   // starting and stopping condition
 
 #define PARITY_BYTES                   6      // These must sum to < 255
-#define PAYLOAD_BYTES                  10      
+#define PAYLOAD_BYTES                  9      // payload + callsign      
     
-# define TRANSMISSION_BYTES             PAYLOAD_BYTES + PARITY_BYTES + 3
+#define START_NBYTES                   2      // 6 start bytes in a row
+#define END_NBYTES                     1      // 4 end bytes
+#define TRANSMISSION_BYTES             PAYLOAD_BYTES + PARITY_BYTES + START_NBYTES + END_NBYTES
 
-#define TRANSMISSION_TIME_MS    (1000 * SAMPLES_PER_SYMBOL * 8 * TRANSMISSION_BYTES) / (BITS_PER_SYMBOL * SAMPLE_RATE)
-#define MIN_INTERVAL_MS         2 * TRANSMISSION_TIME_MS   // Don't allow transmissions within 2 * min interval of eachother 
-#define BAUD_RATE               SAMPLE_RATE / SAMPLES_PER_SYMBOL
-#define BIT_RATE                BAUD_RATE * BITS_PER_SYMBOL
+const double TRANSMISSION_TIME_MS   = (1000 * SAMPLES_PER_SYMBOL * 8 * TRANSMISSION_BYTES) / (BITS_PER_SYMBOL * SAMPLE_RATE);
+const double MIN_INTERVAL_MS        = 4 * TRANSMISSION_TIME_MS;   // Don't allow transmissions within min interval of eachother 
+const double BAUD_RATE              = SAMPLE_RATE / SAMPLES_PER_SYMBOL;
+const double BIT_RATE               = BAUD_RATE * BITS_PER_SYMBOL;
 
 #define DEBOUNCE_MS             100          // ignore isr requests within some recent amount of time to debounce signal
 
@@ -100,56 +102,122 @@ static inline void clear_gpio_intr_status(gpio_num_t pin){
 
 // Send a string of bytes; Sends symbols in little-endian
 // TODO: implement cosine look up table (possible with a phase update?); Separate this into a different file
-// TODO: issue. takes about twice as long
+// TODO: issue. takes about twice as long; due to integer division of #defines
+// Uses bit stuffing to add a 0 after every 5 ones, excluding first and last bytes
 static void tx_bytes(uint8_t *bytes, uint32_t nbytes, int16_t *buf){
 
-    int byte_idx = 0;
-    int bit_idx = BITS_PER_SYMBOL;
-    uint32_t byte = bytes[0];
-    float freq = SYMBOL_FREQS[byte & SYMBOL_MASK];
+    uint8_t byte_idx = 0;
+    uint8_t byte = bytes[0];
+    uint8_t bit_idx = 0;
 
-    static float phase = 0;
-    static int count = 0;   // times the symbol switches
+    #if BITS_PER_SYMBOL == 1
+
+    uint8_t bstuff_en = 0;    // is bit stuffing currently enabled for this bit
+    uint8_t prev_nrzi = 0;     // stores last bit transmitted for NRZI
+    uint8_t bit = ( byte & SYMBOL_MASK );
+
+    uint8_t nrzi_bit;
+    if( bit ) { nrzi_bit = prev_nrzi; } else { nrzi_bit = !prev_nrzi; }
+    printf("%d", nrzi_bit);
+    uint8_t num_ones = 0;   // used for bit stuffing; after 5 ones insert a 0; not used in first / last byte
+    float freq = SYMBOL_FREQS[nrzi_bit];
+
+    #else
+
+    float freq = SYMBOL_FREQS[byte & SYMBOL_MASK]
+
+    #endif
+
+    // do the first read and shift before the loop
+    byte = byte >> BITS_PER_SYMBOL; 
+    bit_idx += BITS_PER_SYMBOL;
+
+    float phase = 0;
+    int count = 0;   // times the symbol switches
 
     size_t written = 0;
     
     while (1) {
 
-        int next_switch = SAMPLES_PER_SYMBOL - count; // Ensure that the buffer length is less than the samples per symbol
+        // determines how many samples until will switch 
+        // Ensure that the buffer length is less than the samples per symbol
+        int next_switch = SAMPLES_PER_SYMBOL - count; 
+
+        // fill the transmission buffer with samples at a frequency
         for (int i = 0; i < BUF_LEN; i++) {
 
+            // Write sample to dac
             float cos01 = 0.5f * cosf(phase) + 0.5f;                                    // cos wave between 0 and 1 with amplitude 0.5
             float voltage = 2 * DAC_AMPLITUDE_V * cos01 + MIN_DAC_V;                    // use parameters to determine voltage to send at
             uint8_t u8 = (uint8_t)(voltage * 255 / 3.3);                                // normalize to 0-255 byte to send
             buf[2 * i] = (int16_t)(u8 << 8);                    // Top byte gets fed to DAC
-            buf[2 * i + 1] = 0;                                 // Required for mono
+            buf[2 * i + 1] = 0;                                 // Other DAC zeroed; Required for mono
 
-            // Swap frequency mid buffer
+            // If this sample swaps frequency
+            // TODO: bit stuffing should happen before nrzi; currently happens after
             if (i == next_switch) {
 
-                // increment bits
-                if (bit_idx < 8) {
-                    byte = byte >> BITS_PER_SYMBOL;
-                    freq = SYMBOL_FREQS[byte & SYMBOL_MASK];
-                    bit_idx += BITS_PER_SYMBOL;
-                } 
-                // increment to new word
-                else {
-                    if (byte_idx == nbytes - 1) { // transmission finished; auto flush buffer
+                // If made through entire byte, continue in byte array
+                if (bit_idx == 8) {
+
+                    printf(" ");
+
+                    // If transmission finished; auto flush buffer
+                    if (byte_idx == nbytes - 1) { 
+                        printf("\n\n");
                         i2s_write(I2S_NUM_0, buf, 2 * (i + 1) * sizeof(int16_t), &written, portMAX_DELAY); 
                         return;
                     }
-                    else {
-                        byte_idx++;
-                        byte = bytes[byte_idx];
-                        freq = SYMBOL_FREQS[byte & SYMBOL_MASK];
-                        bit_idx = BITS_PER_SYMBOL;
-                    }
+                    // else continue through byte array
+                    byte_idx++;
+                    byte = bytes[byte_idx];
+                    bit_idx = 0;
+
                 }
+
+                // Get frequency of next symbol
+                #if BITS_PER_SYMBOL == 1
+
+                    // save the previous level
+                    prev_nrzi = nrzi_bit;
+
+                    // normal case; grab next symbol and shift
+                    // don't bit stuff on first or last byte
+                    if ( !bstuff_en || byte_idx < START_NBYTES || byte_idx >= TRANSMISSION_BYTES - END_NBYTES ) {  
+                        bit = (byte & SYMBOL_MASK);
+                        bit_idx += BITS_PER_SYMBOL;
+                        byte = byte >> BITS_PER_SYMBOL;
+                    }
+                    // this bit should be stuffed; retain current position and inject 0
+                    else { bit = 0; }
+
+                    // if 1 increment consecutive 1's counter 
+                    if ( bit && byte_idx != 0 && byte_idx != nbytes - 1 ) { num_ones += 1; } 
+                    // else reset consecutive 1's counter 
+                    else { 
+                        num_ones = 0; 
+                        bstuff_en = 0; // catches case where we are currently bit stuffing (bit = 0) and disables it
+                    }
+
+                    // five ones in a row, enable bit stuffing for next bit
+                    if ( num_ones >= 5 ) { bstuff_en = 1; num_ones = 0; }
+
+                    // calculate nrzi
+                    if( bit ) { nrzi_bit = prev_nrzi; } else { nrzi_bit = !prev_nrzi; }
+                    printf("%d", nrzi_bit);
+
+                    // correct frequency to transmit at
+                    freq = SYMBOL_FREQS[nrzi_bit];
+
+                #else
+                    // simple; no NRZI or stuffing; simply shift and read
+                    freq = SYMBOL_FREQS[byte & SYMBOL_MASK];
+                    bit_idx += BITS_PER_SYMBOL;
+                #endif
 
             }
 
-            // update phase
+            // update phase; use a phase accumulator for smooth transitions between frequencies
             phase += 2 * PI * freq / SAMPLE_RATE;
             if (phase >= 2 * PI) { phase -= 2 * PI; }
 
@@ -168,7 +236,7 @@ static void tx_bytes(uint8_t *bytes, uint32_t nbytes, int16_t *buf){
 // TODO: implement
 // currently stub
 static void get_gps(uint8_t *bytes) {
-    for (uint8_t count = 0; count < PAYLOAD_BYTES; count++) {
+    for (uint8_t count = 0; count < PAYLOAD_BYTES - 1; count++) {
         bytes[count] = count;
     }
 }
@@ -178,26 +246,30 @@ static void tx_gps_task() {
 
     int16_t *buf = (int16_t*)heap_caps_malloc(BUF_LEN * 2 * sizeof(int16_t), MALLOC_CAP_DEFAULT);
     uint8_t *tx_data = (uint8_t*)heap_caps_malloc(TRANSMISSION_BYTES * sizeof(uint8_t), MALLOC_CAP_DEFAULT);
+
     tx_data[0] = START_STOP;
-    tx_data[1] = CALL_SIGN;
+    tx_data[1] = START_STOP;
+    tx_data[START_NBYTES] = CALL_SIGN;
     tx_data[TRANSMISSION_BYTES - 1] = START_STOP;
 
     while(1) {
 
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);                // wait until woken up
-        uint8_t *payload = (uint8_t*)(tx_data + 2);             // pointer to the payload bytes
-        get_gps(payload);                                       // currently stubbed
+        uint8_t *payload = (uint8_t*)(tx_data + START_NBYTES);             // pointer to the payload bytes
+        uint8_t *gps     = (uint8_t*)(payload + 1);                
+
+        get_gps(gps);                                       // currently stubbed
         uint8_t *parity = (uint8_t*)(payload + PAYLOAD_BYTES);  // pointer to the parity bytes
 
-        printf("Data: ");
+        encode_rs_char(rs_encoder, payload, parity); // set parity bytes
+
+        printf("payload: ");
         for (size_t i = 0; i < PAYLOAD_BYTES; i++) {
             printf("%02X ", payload[i]);  // two-digit uppercase hex
         }
         printf("\n");
 
-        encode_rs_char(rs_encoder, payload, parity); // set parity bytes
-
-        printf("Encoded: ");
+        printf("Message: ");
         for (size_t i = 0; i < TRANSMISSION_BYTES; i++) {
             printf("%02X ", tx_data[i]);  // two-digit uppercase hex
         }
@@ -211,15 +283,15 @@ static void tx_gps_task() {
 
 }
 
-
 // Resets ptt after gps transmission
 static void disable_ptt_timer_callback() {
     gpio_set_level(PTT_OUTPUT_PIN, PTT_INACTIVE_LVL);
+    #if !AUTOMATIC_TRANSMISSION
     clear_gpio_intr_status(PTT_INPUT_PIN);
     gpio_intr_enable(PTT_INPUT_PIN);
+    #endif
     gps_tx = 0;
 }
-
 
 // Spawns send gps task when ptt releases
 static void IRAM_ATTR ptt_interrupt_handler() {
@@ -248,8 +320,10 @@ static void IRAM_ATTR ptt_interrupt_handler() {
     if (elapsed_tx_ms < MIN_INTERVAL_MS) return;   // ignore too-soon interrupts
     last_tx_ticks = now_ticks;
 
+    #if !AUTOMATIC_TRANSMISSION
     gpio_intr_disable(PTT_INPUT_PIN); // disable interrupts on ptt
     clear_gpio_intr_status(PTT_INPUT_PIN);
+    #endif
     gps_tx = 1;
 
 
@@ -272,7 +346,13 @@ static void gps_timer_callback() {
     if (elapsed_tx_ms < MIN_INTERVAL_MS) return;   // ignore too-soon interrupts
     last_tx_ticks = now_ticks;
 
-    gpio_set_level(PTT_OUTPUT_PIN, PTT_ACTIVE_LVL);
+    #if !AUTOMATIC_TRANSMISSION
+    gpio_intr_disable(PTT_INPUT_PIN); // disable interrupts on ptt
+    clear_gpio_intr_status(PTT_INPUT_PIN);
+    #endif
+    gps_tx = 1;
+
+    //gpio_set_level(PTT_OUTPUT_PIN, PTT_ACTIVE_LVL);
     xTaskNotifyGive(send_gps_handle);
 
 }
@@ -308,6 +388,7 @@ static void config_dac() {
 // Build and configure ptt pins and handlers
 static void config_ptt() {
 
+    #if !AUTOMATIC_TRANSMISSION
     gpio_config_t ptt_in_conf = {
         .intr_type = GPIO_INTR_POSEDGE,  // activates on rising edge
         .mode = GPIO_MODE_INPUT,
@@ -316,6 +397,7 @@ static void config_ptt() {
         .pull_down_en = GPIO_PULLDOWN_DISABLE
     };
     gpio_config(&ptt_in_conf);
+    #endif
 
     gpio_config_t ptt_out_conf = {
         .pin_bit_mask = 1ULL << PTT_OUTPUT_PIN,
@@ -328,7 +410,7 @@ static void config_ptt() {
 
     ptt_disable_timer = xTimerCreate(
         "ptt_disable_timer",
-        pdMS_TO_TICKS(TRANSMISSION_TIME_MS + PTT_BUFFER_MS),
+        pdMS_TO_TICKS(3 * TRANSMISSION_TIME_MS),
         pdFALSE,           // auto-reload = false
         NULL,
         disable_ptt_timer_callback
@@ -365,26 +447,11 @@ static void config_auto_gps_timer() {
 }
 #endif
 
-// Changes a message to NRZI form to encode flips rather than bits; EG 1101 -> 1011; assumed starting bit of 0;
-// only use when bits per symbol is 1
-static void NRZI(uint32_t *words, uint32_t nwords) {
-
-    int prev = 0;
-    for (int word_idx = 0; word_idx < nwords; word_idx++) {
-        uint32_t word = words[word_idx];
-        int cur = word & 1;
-        uint32_t mask = (word << 1) ^ prev; //
-        words[word_idx] = word ^ mask;
-        prev = cur;
-    }
-
-}
-
 void app_main(void) {
 
-    printf("Transmission Time: %d ms\n", TRANSMISSION_TIME_MS);
-    printf("Baud Rate: %d sym/sec\n", BAUD_RATE);
-    printf("Bit Rate: %d bit/sec\n", BIT_RATE);
+    printf("Transmission Time: %f ms\n", TRANSMISSION_TIME_MS);
+    printf("Baud Rate: %f sym/sec\n", BAUD_RATE);
+    printf("Bit Rate: %f bit/sec\n", BIT_RATE);
     printf("DAC Range: %fV to %fV\n", MIN_DAC_V, MIN_DAC_V + 2 * DAC_AMPLITUDE_V);
     #if PTT_ACTIVE_LVL
         printf("PTT Active High\n");

@@ -744,8 +744,8 @@ static int try_decode (rrbb_t block, int chan, int subchan, int slice, alevel_t 
 
 	// RIDGE NOTE:
 	// Have entire frame here
-	duty_cyclists_decode(H2.frame_buf, H2.frame_len);	
-	return 1;
+	return duty_cyclists_decode(H2.frame_buf, H2.frame_len);	
+	
 /* 
  * Do we have a minimum number of complete bytes?
  */

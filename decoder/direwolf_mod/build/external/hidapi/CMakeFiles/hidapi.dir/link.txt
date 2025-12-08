@@ -1,2 +1,0 @@
-/usr/bin/x86_64-w64-mingw32-ar.exe qc libhidapi.a CMakeFiles/hidapi.dir/hid.c.o
-/usr/bin/x86_64-w64-mingw32-ranlib.exe libhidapi.a

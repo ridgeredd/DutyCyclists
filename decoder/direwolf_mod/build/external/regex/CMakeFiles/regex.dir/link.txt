@@ -1,2 +1,0 @@
-/usr/bin/x86_64-w64-mingw32-ar.exe qc libregex.a CMakeFiles/regex.dir/regex.c.o
-/usr/bin/x86_64-w64-mingw32-ranlib.exe libregex.a

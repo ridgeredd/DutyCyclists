@@ -60,9 +60,9 @@
  * Minimum & maximum sizes of an AX.25 frame including the 2 octet FCS. 
  */
 
-#define MIN_FRAME_LEN ((DUTY_CYCLISTS_PACKET_LEN) - 8)
+#define MIN_FRAME_LEN ((DUTY_CYCLISTS_PACKET_LEN) - 10)
 				
-#define MAX_FRAME_LEN ((DUTY_CYCLISTS_PACKET_LEN) + 12)	
+#define MAX_FRAME_LEN ((DUTY_CYCLISTS_PACKET_LEN) + 25)	
 
 /*
  * This is the current state of the HDLC decoder.
@@ -460,6 +460,7 @@ void hdlc_rec_bit (int chan, int subchan, int slice, int raw, int is_scrambled, 
 
 // EAS does not use HDLC.
 
+	// RIDGE NOTE: not called for afsk
 	if (g_audio_p->achan[chan].modem_type == MODEM_EAS) {
 	  eas_rec_bit (chan, subchan, slice, raw, not_used_remove);
 	  return;
@@ -477,6 +478,7 @@ void hdlc_rec_bit (int chan, int subchan, int slice, int raw, int is_scrambled, 
  *   A '1' bit is represented by no change.
  */
 
+	// RIDGE NOTE: not called for afsk
 	if (is_scrambled) {
 	  int descram;
 
@@ -493,14 +495,17 @@ void hdlc_rec_bit (int chan, int subchan, int slice, int raw, int is_scrambled, 
 	  H->prev_raw = raw;
 	}
 
+	// RIDGE NOTE: ADDED
+	//printf("%d", dbit);
+
 // After BER insertion, NRZI, and any descrambling, feed into FX.25 decoder as well.
 // Don't waste time on this if AIS.  EAS does not get this far.
 
 	// RIDGE: do not call fx25_rec_bit, do not call il2p_rec_bit
 
 	if (g_audio_p->achan[chan].modem_type != MODEM_AIS) {
-	  fx25_rec_bit (chan, subchan, slice, dbit);
-	  il2p_rec_bit (chan, subchan, slice, raw);	// Note: skip NRZI.
+	  //fx25_rec_bit (chan, subchan, slice, dbit);
+	  //il2p_rec_bit (chan, subchan, slice, raw);	// Note: skip NRZI.
 	}
 
 /*

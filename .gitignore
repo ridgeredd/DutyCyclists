@@ -9,7 +9,7 @@ __pycache__/
 *.d
 
 # Ignore build folders
-esp32/build
+/esp32/build
 .vscode
 
 # Ignore IDE settings
@@ -20,7 +20,7 @@ esp32/build
 
 sdkconfig.old
 sdkconfig.ci
-esp32/sdkconfig
+/esp32/sdkconfig
 
 # FROM DIREWOLF
 
@@ -67,9 +67,9 @@ z*
 
 # Binaries, other build results
 
-decoder/direwolf/build
-decoder/direwolf/.github
-decoder/direwolf/.vscode
+/decoder/direwolf_mod/build
+/decoder/direwolf_mod/.github
+/decoder/direwolf_mod/.vscode
 
 # =========================
 # Operating System Files

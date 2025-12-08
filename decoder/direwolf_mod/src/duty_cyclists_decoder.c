@@ -2,25 +2,75 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "duty_cyclists_decoder.h"
+#include "fx25.h"
 
 unsigned char DUTY_CYCLISTS_RADIO_ID = 0x67;
 
+#define PARITY_BYTES                   6      // These must sum to < 255
+#define PAYLOAD_BYTES                  9      // payload + callsign      
+    
+#define START_NBYTES                   2      // 6 start bytes in a row
+#define END_NBYTES                     1      // 4 end bytes
+#define TRANSMISSION_BYTES             PAYLOAD_BYTES + PARITY_BYTES + START_NBYTES + END_NBYTES
+
+static int is_rs_init = 0;
+static struct rs *rs_encoder = NULL;
+
 //const static char[] filename = "gps_data/{}.json";
+
+static void init_rs() {
+
+    is_rs_init = 1;
+
+    // Initialize reed-solomon encoder. Requirements for library specified here: 
+    // https://manpages.debian.org/unstable/libfec-dev/rs.3.en.html?utm_source=chatgpt.com
+    rs_encoder = INIT_RS(
+        8, // gives the symbol size in bits, up to 32
+        0x11D, // gives the extended Galois field generator polynomial coefficients, with the 0th coefficient in the low order bit. The polynomial must be primitive; if not, the call will fail and NULL will be returned.
+		0, // gives, in index form, the first consecutive root of the Reed Solomon code generator polynomial
+        1, // gives, in index form, the primitive element in the Galois field used to generate the Reed Solomon code generator polynomial.
+        PARITY_BYTES // gives the number of roots in the Reed Solomon code generator polynomial. This equals the number of parity symbols per code block.
+		//255 - PARITY_BYTES - PAYLOAD_BYTES // gives the number of leading symbols in the codeword that are implicitly padded to zero in a shortened code block.
+        // The resulting Reed-Solomon code has parameters (N,K), where N = 2^symsize - pad - 1 and K = N-nroots.
+    );
+}
+
 
 /*
  *  frame_buf a frame of bytes after NRZI, bit unstuffing, and removing start/stop
- *  frame_len is length of frame_buf
+ *  frame_len is length of data stream
  *  
 */
-void duty_cyclists_decode(unsigned char frame_buf[], int frame_len) {
+int duty_cyclists_decode(unsigned char frame[], int frame_len) {
+
+    if( !is_rs_init ) {
+        init_rs();
+    }
+
+    if ( frame_len != DUTY_CYCLISTS_PACKET_LEN ) { return 0; }
+
+    int success = DECODE_RS(rs_encoder, frame, NULL, 0);
+
+    if( !success ) { return 0; }
+
+    if ( frame[0] != DUTY_CYCLISTS_RADIO_ID ) { return 0; }
+
+    printf("Success!\n");
+    for (int i = 0; i < DUTY_CYCLISTS_PAYLOAD_LEN; i++) {
+        printf("%02X ", frame[i]);
+    }
+    printf("\n\n");
+
+    return 1;
+    
 
     //printf("Frame Length: %d\n", frame_len);
 
     // Filter out noise that does not match our packet length
-    if (frame_len != DUTY_CYCLISTS_PACKET_LEN + 2) { return; }
+    //if (frame_len != DUTY_CYCLISTS_PACKET_LEN + 2) { return; }
 
     // Filter out noise that does not match a listed radio (in this case there is only 1)
-    if (frame_buf[0] != DUTY_CYCLISTS_RADIO_ID) { return; }
+    //if (frame_buf[0] != DUTY_CYCLISTS_RADIO_ID) { return; }
 
     // Filter 
 
@@ -37,11 +87,5 @@ void duty_cyclists_decode(unsigned char frame_buf[], int frame_len) {
 
     // Create time stamp
     //uint32_t time = 0;
-
-    printf("Raw Bytes\n");
-    for (int i = 0; i < frame_len; i++) {
-        printf("%02X ", frame_buf[i]);
-    }
-    printf("\n");
 
 }
