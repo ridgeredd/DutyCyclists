@@ -115,6 +115,7 @@ function clearAllMarkers() {
 // Load markers from JSON file in GPSData folder
 async function loadMarkersFromFile(filename) {
     try {
+        
         const response = await fetch(`GPSData/${filename}`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -127,38 +128,38 @@ async function loadMarkersFromFile(filename) {
         }
         
         // Clear existing markers first
-        // clearAllMarkers();
+        clearAllMarkers();
         
-        markerData.forEach(m => {
-            if (!m.lat || !m.lng) {
-                console.warn('Skipping marker with missing lat/lng:', m);
-                return;
-            }
-            
-            const marker = L.marker([m.lat, m.lng]).addTo(map);
-            
-            const popupContent = `
-                <div class="marker-popup">
-                    <h4>Marker Details</h4>
-                    <p><strong>ID:</strong> ${m.id || 'N/A'}</p>
-                    <p><strong>Latitude:</strong> ${m.lat.toFixed(6)}</p>
-                    <p><strong>Longitude:</strong> ${m.lng.toFixed(6)}</p>
-                    <p><strong>Recorded:</strong> ${m.timestamp ? new Date(m.timestamp).toLocaleString() : 'N/A'}</p>
-                </div>
-            `;
-            
-            marker.bindPopup(popupContent);
-            
-            markers.push({
-                id: m.id || `MARKER-${String(markerCounter).padStart(4, '0')}`,
-                lat: m.lat,
-                lng: m.lng,
-                timestamp: m.timestamp || new Date().toISOString(),
-                leafletMarker: marker
-            });
-            
-            markerCounter++;
+        m = markerData[markerData.length - 1];
+        if (!m.lat || !m.lng) {
+            console.warn('Skipping marker with missing lat/lng:', m);
+            return;
+        }
+        
+        const marker = L.marker([m.lat, m.lng]).addTo(map);
+        
+        const popupContent = `
+            <div class="marker-popup">
+                <h4>Marker Details</h4>
+                <p><strong>ID:</strong> ${m.id || 'N/A'}</p>
+                <p><strong>Latitude:</strong> ${m.lat.toFixed(6)}</p>
+                <p><strong>Longitude:</strong> ${m.lng.toFixed(6)}</p>
+                <p><strong>Recorded:</strong> ${m.timestamp ? new Date(m.timestamp).toLocaleString() : 'N/A'}</p>
+            </div>
+        `;
+        
+        marker.bindPopup(popupContent);
+        
+        markers.push({
+            id: m.id || `MARKER-${String(markerCounter).padStart(4, '0')}`,
+            lat: m.lat,
+            lng: m.lng,
+            timestamp: m.timestamp || new Date().toISOString(),
+            leafletMarker: marker
         });
+        
+        markerCounter++;
+        
         
         // Fit map to show all markers
         if (markers.length > 0) {
@@ -177,65 +178,70 @@ async function loadMarkersFromFile(filename) {
 }
 
 // Load markers from JSON file upload
-async function loadMarkersFromJSON(file) {
-    try {
-        const text = await file.text();
-        const markerData = JSON.parse(text);
+// async function loadMarkersFromJSON(file) {
+//     try {
+//         const text = await file.text();
+//         const markerData = JSON.parse(text);
         
-        if (!Array.isArray(markerData)) {
-            alert('JSON file must contain an array of markers');
-            return;
-        }
+//         if (!Array.isArray(markerData)) {
+//             alert('JSON file must contain an array of markers');
+//             return;
+//         }
         
-        // Clear existing markers first
-        // clearAllMarkers();
+//         // Clear existing markers first
+//         clearAllMarkers();
         
-        markerData.forEach(m => {
-            if (!m.lat || !m.lng) {
-                console.warn('Skipping marker with missing lat/lng:', m);
-                return;
-            }
+
+//         m = markerData[markerData.length - 1];
+
+
+//         //m = markerData.pop()[-1];
+
+//         if (!m.lat || !m.lng) {
+//             console.warn('Skipping marker with missing lat/lng:', m);
+//             return;
+//         }
+        
+//         const marker = L.marker([m.lat, m.lng]).addTo(map);
+        
+//         const popupContent = `
+//             <div class="marker-popup">
+//                 <h4>Marker Details</h4>
+//                 <p><strong>ID:</strong> ${m.id || 'N/A'}</p>
+//                 <p><strong>Latitude:</strong> ${m.lat.toFixed(6)}</p>
+//                 <p><strong>Longitude:</strong> ${m.lng.toFixed(6)}</p>
+//                 <p><strong>Recorded:</strong> ${m.timestamp ? new Date(m.timestamp).toLocaleString() : 'N/A'}</p>
+//             </div>
+//         `;
+        
+//             marker.bindPopup(popupContent);
             
-            const marker = L.marker([m.lat, m.lng]).addTo(map);
+//             markers.push({
+//                 id: m.id || `MARKER-${String(markerCounter).padStart(4, '0')}`,
+//                 lat: m.lat,
+//                 lng: m.lng,
+//                 timestamp: m.timestamp || new Date().toISOString(),
+//                 leafletMarker: marker
+//             });
             
-            const popupContent = `
-                <div class="marker-popup">
-                    <h4>Marker Details</h4>
-                    <p><strong>ID:</strong> ${m.id || 'N/A'}</p>
-                    <p><strong>Latitude:</strong> ${m.lat.toFixed(6)}</p>
-                    <p><strong>Longitude:</strong> ${m.lng.toFixed(6)}</p>
-                    <p><strong>Recorded:</strong> ${m.timestamp ? new Date(m.timestamp).toLocaleString() : 'N/A'}</p>
-                </div>
-            `;
-            
-            marker.bindPopup(popupContent);
-            
-            markers.push({
-                id: m.id || `MARKER-${String(markerCounter).padStart(4, '0')}`,
-                lat: m.lat,
-                lng: m.lng,
-                timestamp: m.timestamp || new Date().toISOString(),
-                leafletMarker: marker
-            });
-            
-            markerCounter++;
-        });
+//             markerCounter++;
+    
         
-        // Fit map to show all markers
-        if (markers.length > 0) {
-            const group = L.featureGroup(markers.map(m => m.leafletMarker));
-            map.fitBounds(group.getBounds().pad(0.1));
-        }
+//         // Fit map to show all markers
+//         if (markers.length > 0) {
+//             const group = L.featureGroup(markers.map(m => m.leafletMarker));
+//             map.fitBounds(group.getBounds().pad(0.1));
+//         }
         
-        // Save to localStorage
-        saveMarkers();
+//         // Save to localStorage
+//         saveMarkers();
         
-        alert(`Successfully loaded ${markers.length} markers`);
-    } catch (error) {
-        alert('Error loading JSON file: ' + error.message);
-        console.error('JSON load error:', error);
-    }
-}
+//         alert(`Successfully loaded ${markers.length} markers`);
+//     } catch (error) {
+//         alert('Error loading JSON file: ' + error.message);
+//         console.error('JSON load error:', error);
+//     }
+// }
 
 
 
@@ -286,5 +292,4 @@ document.getElementById('longitude').addEventListener('keypress', (e) => {
 
 // Load saved markers on page load
 loadMarkers();
-
 loadMarkersFromFile('0.json')
