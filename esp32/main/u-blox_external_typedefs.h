@@ -49,6 +49,7 @@
 */
 
 #pragma once
+#include <stdint.h>
 
 #define kUBLOXGNSSDefaultAddress 0x42 // Default 7-bit unshifted address of the ublox 6/7/8/M8/F9 series
 

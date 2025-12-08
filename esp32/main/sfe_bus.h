@@ -52,9 +52,9 @@
 
 #pragma once
 
-#include <Arduino.h>
-#include <Wire.h>
-#include <SPI.h>
+// #include <Arduino.h>
+// #include <Wire.h>
+// #include <SPI.h>
 
 namespace SparkFun_UBLOX_GNSS
 {

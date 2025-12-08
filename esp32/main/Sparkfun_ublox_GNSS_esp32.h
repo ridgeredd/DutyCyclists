@@ -18,7 +18,7 @@
 
 #include "u-blox_GNSS.h"
 #include "u-blox_external_typedefs.h"
-#include "sfe_bus.h"
+//#include "sfe_bus.h"
 
 // Primary ESP32 UART-based GNSS class
 class SFE_UBLOX_GNSS_UART : public DevUBLOXGNSS
