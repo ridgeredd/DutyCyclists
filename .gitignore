@@ -93,4 +93,4 @@ z*
 *.dSYM
 
 #GPS Data jsons
-/appv2/GPSData/
+/appv2/GPSData/*.json
