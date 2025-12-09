@@ -83,7 +83,7 @@
 #define SFE_UBLOX_DISABLE_RAWX_SFRBX_PMP_QZSS_SAT
 #endif
 
-#include <Arduino.h>
+//#include <Arduino.h>
 #include "u-blox_config_keys.h"
 #include "u-blox_structs.h"
 #include "u-blox_external_typedefs.h"

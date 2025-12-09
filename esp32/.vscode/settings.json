@@ -1,4 +1,10 @@
 {
+  "files.associations": {
+    "*.c": "c",
+    "u-blox_external_typedefs.h": "c"
+  },
+  "idf.flashType": "UART",
+
   "C_Cpp.intelliSenseEngine": "default",
   "idf.espIdfPathWin": "C:\\Libraries\\esp\\v5.5.1\\esp-idf",
   "idf.pythonInstallPath": "C:\\Libraries\\.espressif\\tools\\idf-python\\3.11.2\\python.exe",
