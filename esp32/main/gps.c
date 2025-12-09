@@ -115,7 +115,7 @@ static bool parse_gll(const char *line, gnss_data_t *out)
     return true;
 }
 
-/* read UART, accumulate lines, parse GGA */
+/* read UART, accumulate lines, parse GLL */
 static void gps_task(void *arg)
 {
     ESP_LOGI(TAG, "Starting GPS UART task (baud=%d)", GPS_BAUD_RATE);
@@ -151,10 +151,10 @@ static void gps_task(void *arg)
                         linebuf[line_pos] = '\0';
                         // process line
                         if (linebuf[0] == '$') {
-                            // only handle GGA for now
-                            if ((strncmp(linebuf + 1, "GNGGA", 5) == 0) || (strncmp(linebuf + 1, "GPGGA", 5) == 0)) {
+                            // only handle GLL
+                            if (strncmp(linebuf + 1, "GNGLL", 5) == 0) {
                                 gnss_data_t fix;
-                                if (parse_gga(linebuf, &fix)) {
+                                if (parse_gll(linebuf, &fix)) {
                                     set_latest_fix(&fix);
                                     ESP_LOGI(TAG, "GPS fix: lat=%.6f lon=%.6f", fix.latitude, fix.longitude);
                                 }
