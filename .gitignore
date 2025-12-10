@@ -91,3 +91,6 @@ z*
 *.lnk
 /use_this_sdk
 *.dSYM
+
+#GPS Data jsons
+/appv2/GPSData/*.jsons
