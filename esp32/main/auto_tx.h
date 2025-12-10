@@ -8,6 +8,6 @@ void auto_tx_init();
 
 void reset_auto_tx_timer();
 
-uint8_t get_auto_tx();
+uint8_t was_auto_tx_flagged();
 
 #endif

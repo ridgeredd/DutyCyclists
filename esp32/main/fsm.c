@@ -26,15 +26,16 @@ static struct {
     unsigned auto_TX         : 1;  // automatically transmit
 } FSM_flags;
 
-static void set_flags() {
-    
-}
-
 static FSM_State cur_state;
 
 static uint8_t PTT_level;
 static uint8_t PTT_prev_level;
 static uint8_t TX_enabled;
+
+// helper functions to determine if were pressed / released from flags
+static inline uint8_t was_ptt_pressed() { return !PTT_level && PTT_prev_level; }
+static inline uint8_t was_ptt_released() { return PTT_level && !PTT_prev_level; }
+static inline void update_ptt() { PTT_prev_level = PTT_level; PTT_level = get_ptt(); }
 
 // Static declarations
 static FSM_State fsm_idle();
@@ -75,10 +76,7 @@ void FSM_set_ptt( uint8_t PTT_new_level ) {
 void fsm_main() {
 
     // TODO: move this to check the auto_tx class
-    if( FSM_flags.TX_reenable ) { TX_enabled = 1; }
-    if( was_ptt_disabled() ) { FSM_flag_tx_finished(); }
-    FSM_set_ptt(get_ptt());
-    if( get_auto_tx() == 1 ) { FSM_flag_auto_tx(); }
+    update_ptt();
 
     FSM_State next_state;
     switch ( cur_state ) {
@@ -110,22 +108,13 @@ void fsm_init() {
 
 //=============================================== Static Functions ==========================================================
 
-// helper functions to determine if were pressed / released from flags
-static inline uint8_t was_ptt_pressed() { return !PTT_level && PTT_prev_level; }
-static inline uint8_t was_ptt_released() { return PTT_level && !PTT_prev_level; }
-
 static FSM_State fsm_idle() {
 
     // if PTT pressed -> voice
-    if( FSM_flags.PTT_edge ) { 
-
-        if ( was_ptt_pressed() ) { return FSM_VOICE; }
-    }
+    if ( was_ptt_pressed() ) { return FSM_VOICE; }
     // if auto transmission -> start transmission
-    if( FSM_flags.auto_TX && TX_enabled ) {
+    if( was_auto_tx_flagged() && is_tx_enabled() ) {
 
-        // disable_PTT_gpio();
-        // maybe wait some amount of time
         key_ptt();
         return FSM_START_TX;
     }
@@ -137,22 +126,16 @@ static FSM_State fsm_idle() {
 static FSM_State fsm_voice() {
 
     // if PTT p
-    if( FSM_flags.PTT_edge ) { 
+    if( was_ptt_released() ) { 
 
-        //PTT_prev_level = PTT_level;
-        //PTT_level = get_PTT();
-        uint8_t released = was_ptt_released();
-            ESP_LOGI("fsm", "released: %u, enabled: %u", released, TX_enabled);
-        if ( was_ptt_released() && TX_enabled ) { 
+        if( is_tx_enabled() ) {
 
-            //disable_PTT_gpio();
-            // maybe wait some amount of time
             key_ptt();
             reset_auto_tx_timer();
             return FSM_START_TX; 
-        } else {
-            return FSM_IDLE;
         }
+        // released too soon
+        return FSM_IDLE;
 
     }
     // ignore automatic tx in this case
@@ -171,8 +154,7 @@ static FSM_State fsm_start_tx() {
 
 static FSM_State fsm_tx() {
 
-    // turn of ptt and reenable interrupts
-    if( FSM_flags.TX_finished ) { return FSM_IDLE; }
+    if( was_ptt_disabled() ) { disable_tx(); return FSM_IDLE; }
     return FSM_TX;
 
 }

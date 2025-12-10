@@ -2,9 +2,9 @@
 #include "libfec/fec.h"
 #include "driver/i2s.h"
 #include <stdio.h>
-#include <inttypes.h>
 #include <math.h>
 #include "freertos/FreeRTOS.h"
+#include "freertos/timers.h"
 #include "esp_timer.h"
 
 // TODO: replace printfs with esp_logis
@@ -34,14 +34,16 @@ const double TRANSMISSION_TIME_MS   = (1000 * SAMPLES_PER_SYMBOL * 8 * TRANSMISS
 const double MIN_INTERVAL_MS        = 4 * TRANSMISSION_TIME_MS;   // Don't allow transmissions within min interval of eachother 
 const double BAUD_RATE              = SAMPLE_RATE / SAMPLES_PER_SYMBOL;
 const double BIT_RATE               = BAUD_RATE * BITS_PER_SYMBOL;
+const double TX_DISABLE_MS   = TRANSMISSION_TIME_MS;       // amount of time we disabled transmission for after finishing
 
 // Encoder handle for reed-solomon
 static void* rs_encoder = NULL;
 
+static uint8_t tx_enabled = 0;
+
 // Handle for asynchronous gps sending task
 static TaskHandle_t tx_gps_handle = NULL;         // task handle to request transmission
-
-// TODO: create timer to reenable transmission
+static TimerHandle_t tx_reenable_timer = NULL;    // time to wait until reenabling transmission to prevent spamming; optional
 
 // TODO: implement in a gps class; currently stubbed
 static void get_gps(uint8_t *bytes) {
@@ -54,24 +56,16 @@ static void get_gps(uint8_t *bytes) {
 
 static void tx_gps_task();
 static void config_dac();
+static void config_rs();
+static void config_reenable_tx_timer();
 
 //================================================ API =============================================================
 
 void tx_init() {
 
     config_dac();
-
-    // Initialize reed-solomon encoder. Requirements for library specified here: 
-    // https://manpages.debian.org/unstable/libfec-dev/rs.3.en.html?utm_source=chatgpt.com
-    rs_encoder = init_rs_char(
-        8, // gives the symbol size in bits, up to 32
-        0x11D, // gives the extended Galois field generator polynomial coefficients, with the 0th coefficient in the low order bit. The polynomial must be primitive; if not, the call will fail and NULL will be returned.
-		0, // gives, in index form, the first consecutive root of the Reed Solomon code generator polynomial
-        1, // gives, in index form, the primitive element in the Galois field used to generate the Reed Solomon code generator polynomial.
-        PARITY_NBYTES, // gives the number of roots in the Reed Solomon code generator polynomial. This equals the number of parity symbols per code block.
-		255 - PARITY_NBYTES - PAYLOAD_NBYTES // gives the number of leading symbols in the codeword that are implicitly padded to zero in a shortened code block.
-        // The resulting Reed-Solomon code has parameters (N,K), where N = 2^symsize - pad - 1 and K = N-nroots.
-    );
+    config_rs();
+    config_reenable_tx_timer();
 
     xTaskCreate(tx_gps_task, "gps_task", 4096, NULL, 3 /*priority*/, &tx_gps_handle);
 }
@@ -79,7 +73,30 @@ void tx_init() {
 // Wake an asynch task to send gps
 void tx_gps() { xTaskNotifyGive(tx_gps_handle); }
 
+// Disable transmission and start a timer that will reenable
+void disable_tx() { tx_enabled = 0; xTimerStart(tx_reenable_timer, 0); }
+
+// Return whether transmission is enabled
+uint8_t is_tx_enabled() { return tx_enabled; }
+
 //==================================================================================================================
+
+static void tx_reenable_callback() { tx_enabled = 1; }
+
+static void config_reenable_tx_timer() {
+
+    tx_reenable_timer = xTimerCreate(
+        "gps_timer",
+        pdMS_TO_TICKS(TX_DISABLE_MS),
+        pdFALSE, // repeats timer after expires
+        NULL,
+        tx_reenable_callback
+    );
+
+    // initial downtime before sending
+    disable_tx();
+
+}
 
 // Build and configure dac
 static void config_dac() {
@@ -108,9 +125,26 @@ static void config_dac() {
 
 }
 
+// Build and configure reed solomon encoder
+static void config_rs() {
+
+    // Initialize reed-solomon encoder. Requirements for library specified here: 
+    // https://manpages.debian.org/unstable/libfec-dev/rs.3.en.html?utm_source=chatgpt.com
+    rs_encoder = init_rs_char(
+        8, // gives the symbol size in bits, up to 32
+        0x11D, // gives the extended Galois field generator polynomial coefficients, with the 0th coefficient in the low order bit. The polynomial must be primitive; if not, the call will fail and NULL will be returned.
+		0, // gives, in index form, the first consecutive root of the Reed Solomon code generator polynomial
+        1, // gives, in index form, the primitive element in the Galois field used to generate the Reed Solomon code generator polynomial.
+        PARITY_NBYTES, // gives the number of roots in the Reed Solomon code generator polynomial. This equals the number of parity symbols per code block.
+		255 - PARITY_NBYTES - PAYLOAD_NBYTES // gives the number of leading symbols in the codeword that are implicitly padded to zero in a shortened code block.
+        // The resulting Reed-Solomon code has parameters (N,K), where N = 2^symsize - pad - 1 and K = N-nroots.
+    );
+
+}
+
 // Send a string of bytes; Sends symbols in little-endian
 // Uses bit stuffing to add a 0 after every 5 ones, excluding first and last bytes
-static void tx_bytes(uint8_t *bytes, uint32_t nbytes, int16_t *buf){
+static void tx_bytes(uint8_t *bytes, uint32_t nbytes, int16_t *buf) {
 
     uint8_t byte_idx = 0;
     uint8_t byte = bytes[0];

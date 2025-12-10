@@ -48,7 +48,7 @@ void reset_auto_tx_timer() {
     #endif
 }
 
-uint8_t get_auto_tx() { 
+uint8_t was_auto_tx_flagged() { 
 
     if( auto_tx == 1 ) { auto_tx = 0; return 1; }
     return 0;

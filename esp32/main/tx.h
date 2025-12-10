@@ -1,6 +1,8 @@
 #ifndef TX_H
 #define TX_H
 
+#include <inttypes.h>
+
 extern const double TRANSMISSION_TIME_MS;
 extern const double BIT_RATE;
 extern const double BAUD_RATE;
@@ -12,5 +14,13 @@ void tx_init();
 
 // Wake an asynch task to send gps
 void tx_gps();
+
+void tx_gps();
+
+// Disable tx and start a timer that will reenable transmission
+void disable_tx();
+
+// Return whether transmission is enabled
+uint8_t is_tx_enabled();
 
 #endif
