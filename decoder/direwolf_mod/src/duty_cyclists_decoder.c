@@ -3,6 +3,11 @@
 #include <stdio.h>
 #include "duty_cyclists_decoder.h"
 #include "fx25.h"
+#include "json_object.h"
+#include "gpsToJSON.c"
+#include <time.h>
+
+
 
 unsigned char DUTY_CYCLISTS_RADIO_ID = 0x67;
 
@@ -60,6 +65,25 @@ int duty_cyclists_decode(unsigned char frame[], int frame_len) {
         printf("%02X ", frame[i]);
     }
     printf("\n\n");
+    //code to write to JSON
+    unsigned int id = frame[0];
+    unsigned int lat =  frame[1] << 32 | 
+                        frame[2] << 24 |
+                        frame[3] << 16 |
+                        frame[4] << 8 |
+                        frame[5];
+    unsigned int lon =  frame[6] << 32 | 
+                        frame[7] << 24 |
+                        frame[8] << 16 |
+                        frame[9] << 8 |
+                        frame[10];
+    time_t timestamp = time(NULL); //grabs current system time
+    struct {
+        double lat;
+        double lon;
+        long timestamp;
+    } coord = {lat ,lon ,timestamp}
+    write_coordinates_to_json(&coord, sizeof(coord), id ,0x7)
 
     return 1;
     

@@ -12,8 +12,6 @@
 #include <errno.h>
 #include <unistd.h>
 
-
-
 // Flags to indicate which fields are present in memory
 typedef enum {
     COORD_HAS_ID        = (1 << 0),
@@ -21,18 +19,6 @@ typedef enum {
     COORD_HAS_LON       = (1 << 2),
     COORD_HAS_TIMESTAMP = (1 << 3)
 } CoordFieldFlags;
-
-
-static gnss_data_t byteToGPS(uint8_t *bytes, size_t length){
-    gnss_data_t data;
-    
-    // decode data 
-    // currently: reads from memory using pointer and use length for blocking size
-    
-    //return struct of data 
-
-    return data;
-}
 
 // additional function for converting struct to json string
 // for function, edit json per id if existing, else make new json 
@@ -191,8 +177,7 @@ int write_coordinates_to_json(const void *ptr, size_t length, int id, unsigned i
  * Assumes memory layout: [double latitude][double longitude]
  * Missing optional fields will be set to null
  */
-int write_raw_coordinates_to_json(const void *ptr, size_t length, int id, 
-                                 unsigned int field_flags, const char *json_filename) {
+int write_raw_coordinates_to_json(const void *ptr, size_t length, int id, unsigned int field_flags, const char *json_filename) {
     if (!ptr || !json_filename) {
         fprintf(stderr, "Invalid parameters or insufficient data\n");
         return -1;
@@ -345,22 +330,28 @@ int find_or_create_json(const char *folder_path, const char *json_filename) {
 // Returns 0 on success, -1 on failure
 int create_folder(const char *folder_name) {
     struct stat st = {0};
+    char fullpath[512];
+    const char *filepath = "../../../appv2/";
+
+    // Build the full path: "<filepath>/<folder_name>"
+    snprintf(fullpath, sizeof(fullpath), "%s/%s", filepath, folder_name);
+
     
     // Check if folder already exists
-    if (stat(folder_name, &st) == 0 && S_ISDIR(st.st_mode)) {
+    if (stat(fullpath, &st) == 0 && S_ISDIR(st.st_mode)) {
         // printf("Folder '%s' already exists. Nothing to do.\n", folder_name);
         return 1;
     }
     
     #ifdef _WIN32
         // Windows
-        if (mkdir(folder_name) == 0) {
+        if (mkdir(fullpath) == 0) {
             // printf("Folder '%s' created successfully.\n", folder_name);
             return 0;
         }
     #else
         // Unix/Linux/Mac - requires permissions parameter
-        if (mkdir(folder_name, 0755) == 0) {
+        if (mkdir(fullpath, 0755) == 0) {
             // printf("Folder '%s' created successfully.\n", folder_name);
             return 0;
         }
@@ -370,6 +361,7 @@ int create_folder(const char *folder_name) {
     return -1;
 }
 
+/**
     // Example 1: Full coordinate data with all fields
     Coordinate coord1 = {1, 40.7128, -74.0060, 1699564800}; // New York with timestamp
     unsigned int full_flags = COORD_HAS_ID | COORD_HAS_LAT | COORD_HAS_LON | COORD_HAS_TIMESTAMP;
@@ -409,4 +401,5 @@ int create_folder(const char *folder_name) {
     printf("Entries with missing data will show 'null' in those fields.\n");
     
     return 0;
-}
+
+ */
