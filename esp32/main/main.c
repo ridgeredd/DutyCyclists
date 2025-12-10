@@ -45,7 +45,7 @@ static const float SYMBOL_FREQS[NSYMBOLS]   = { 2200.0f, 1200.0f }; // symbol fr
 #define CODEWORD_BITS           4           // how many bits are combined for RS code alphabet
 #define REDUNDANT_BITS          4           // how many bits are appended for error correction
 
-#define AUTOMATIC_TRANSMISSION       1           // 1 enables 0 disables auto transmission at regular interval
+#define AUTOMATIC_TRANSMISSION       0           // 1 enables 0 disables auto transmission at regular interval
 #define TIMER_DELAY_MS               10000       // milliseconds before resending signal
 static volatile uint64_t last_tx_ticks = 0;         // Last transmission time
 static volatile uint64_t last_isr_ticks = 0;
@@ -66,8 +66,8 @@ static volatile uint64_t last_isr_ticks = 0;
     #define PTT_RELEASE_INTR          EDGE_RISING
 #endif         
 
-#define DAC_AMPLITUDE_V                1.0    // Must be within [0, 3.3]
-#define MIN_DAC_V                      1.0    // band aid solution to dac voltage being clipped when ptt is high; 2 * dac amplitude + dac v must be < 5
+#define DAC_AMPLITUDE_V                0.5    // Must be within [0, 3.3]
+#define MIN_DAC_V                      1.5    // band aid solution to dac voltage being clipped when ptt is high; 2 * dac amplitude + dac v must be < 5
 #define START_STOP                     0x7E   // starting and stopping condition
 
 #define PARITY_BYTES                   6      // These must sum to < 255
