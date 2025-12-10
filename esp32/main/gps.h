@@ -1,4 +1,8 @@
+#ifndef GPS_H
+#define GPS_H
+
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef struct {
     double latitude;   // decimal degrees (+north, -south)
@@ -18,3 +22,5 @@ void gps_start_task(void);
  * returns true if a valid fix was returned (out filled), false otherwise.
  */
 bool gps_get_fix(gnss_data_t *out);
+
+#endif

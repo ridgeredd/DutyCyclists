@@ -23,6 +23,7 @@
 #include "rom/ets_sys.h"
 #include "soc/gpio_struct.h"
 
+#include "gps.h"
 
 #include "libfec/fec.h"
 
@@ -236,10 +237,45 @@ static void tx_bytes(uint8_t *bytes, uint32_t nbytes, int16_t *buf){
 // TODO: implement
 // currently stub
 static void get_gps(uint8_t *bytes) {
-    for (uint8_t count = 0; count < PAYLOAD_BYTES - 1; count++) {
-        bytes[count] = count;
-        //32 bit lat 32 bit long
-    }
+
+    // for (uint8_t count = 0; count < PAYLOAD_BYTES - 1; count++) {
+    //     bytes[count] = count;
+    //     //32 bit lat 32 bit long
+    // }
+
+    gnss_data_t fix;
+    if(!gps_get_fix(&fix)) {
+        // no GPS fix; send zeros
+        memset(bytes, 0, PAYLOAD_BYTES - 1);
+        return;
+    } 
+
+    // // check if fix/location data is >1 minute old
+    // if(fix.fix_age_ms > 60000) { 
+    //     // gps fix too old; send zeros
+    //     memset(bytes, 0, PAYLOAD_BYTES - 1);
+    //     return;
+    // }
+
+    // esp prints lat/long/age values
+    // ESP_LOGI(TAG, "Encoding GPS: lat=%.6f lon=%.6f (age=%lu ms)", fix.latitude, fix.longitude, fix.fix_age_ms);
+
+    // quantize lat/lon to uint32_t (with error of ~0.04 m)
+    uint32_t lat_q = (uint32_t)((fix.latitude + 90.0) * (4294967295.0 / 180.0));
+    uint32_t lon_q = (uint32_t)((fix.longitude + 180.0) * (4294967295.0 / 360.0));
+
+     // Pack into 8 bytes (little-endian)
+    // latitude (32 bits)
+    bytes[0] = (uint8_t)(lat_q & 0xFF);
+    bytes[1] = (uint8_t)((lat_q >> 8) & 0xFF);
+    bytes[2] = (uint8_t)((lat_q >> 16) & 0xFF);
+    bytes[3] = (uint8_t)((lat_q >> 24) & 0xFF);
+    
+    // longitude (32 bits)
+    bytes[4] = (uint8_t)(lon_q & 0xFF);
+    bytes[5] = (uint8_t)((lon_q >> 8) & 0xFF);
+    bytes[6] = (uint8_t)((lon_q >> 16) & 0xFF);
+    bytes[7] = (uint8_t)((lon_q >> 24) & 0xFF);
 }
 
 // Continuously running process that wakes to send gps transmission
@@ -471,6 +507,9 @@ void app_main(void) {
 		255 - PARITY_BYTES - PAYLOAD_BYTES // gives the number of leading symbols in the codeword that are implicitly padded to zero in a shortened code block.
         // The resulting Reed-Solomon code has parameters (N,K), where N = 2^symsize - pad - 1 and K = N-nroots.
     );
+
+    // Initialize GPS Reader
+    gps_start_task();
 
     xTaskCreate(tx_gps_task, "gps_task", 4096, NULL, 3 /*priority*/, &send_gps_handle);
 
