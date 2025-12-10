@@ -1,5 +1,5 @@
 #define AUTO_TX_MS               10000       // milliseconds before resending signal
-#define AUTOMATIC_TRANSMISSION       0       // enables (1) or disables (0) auto transmission at regular interval
+#define AUTOMATIC_TRANSMISSION       1       // enables (1) or disables (0) auto transmission at regular interval
 
 #include "auto_tx.h"
 //#include <inttypes.h>
@@ -11,6 +11,7 @@
 #include "esp_timer.h"
 
 // TODO: consider using a hardware timer, not a freertos timer
+// TODO: add an extra state that is for setting ptt so that it happens sufficiently before transmission
 static TimerHandle_t auto_tx_timer = NULL;         // automatically requests a gps send at regular intervals
 
 static void auto_tx_timer_callback();

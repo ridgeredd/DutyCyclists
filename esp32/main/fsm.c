@@ -14,6 +14,7 @@ typedef enum {
     //FSM_START = 0,   // Start
     FSM_IDLE = 0,    // Nothing pressed
     FSM_VOICE,       // PTT pressed
+    FSM_PTT_KEY,      // Key PTT
     FSM_START_TX,    // PTT released but yet to initiate gps tx
     FSM_TX,          // Currently transmitting gps
     FSM_NUM_STATES
@@ -40,6 +41,7 @@ static inline void update_ptt() { PTT_prev_level = PTT_level; PTT_level = get_pt
 // Static declarations
 static FSM_State fsm_idle();
 static FSM_State fsm_voice();
+static FSM_State fsm_ptt_key();
 static FSM_State fsm_start_tx();
 static FSM_State fsm_tx();
 
@@ -83,6 +85,7 @@ void fsm_main() {
 
         case FSM_IDLE:          next_state = fsm_idle(); break;
         case FSM_VOICE:         next_state = fsm_voice(); break;
+        case FSM_PTT_KEY:       next_state = fsm_ptt_key(); break;
         case FSM_START_TX:      next_state = fsm_start_tx(); break;
         case FSM_TX:            next_state = fsm_tx(); break;
         default:                next_state = FSM_IDLE;
@@ -116,12 +119,15 @@ static FSM_State fsm_idle() {
     if( was_auto_tx_flagged() && is_tx_enabled() ) {
 
         key_ptt();
-        return FSM_START_TX;
+        return FSM_PTT_KEY;
     }
     // stay
     return FSM_IDLE;
 
 }
+
+// Just ensures there is enough time in between keying ptt and starting transmission
+static FSM_State fsm_ptt_key() { return FSM_START_TX; }
 
 static FSM_State fsm_voice() {
 
@@ -132,7 +138,7 @@ static FSM_State fsm_voice() {
 
             key_ptt();
             reset_auto_tx_timer();
-            return FSM_START_TX; 
+            return FSM_PTT_KEY; 
         }
         // released too soon
         return FSM_IDLE;
