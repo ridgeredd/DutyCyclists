@@ -238,6 +238,7 @@ static void tx_bytes(uint8_t *bytes, uint32_t nbytes, int16_t *buf){
 static void get_gps(uint8_t *bytes) {
     for (uint8_t count = 0; count < PAYLOAD_BYTES - 1; count++) {
         bytes[count] = count;
+        //32 bit lat 32 bit long
     }
 }
 
