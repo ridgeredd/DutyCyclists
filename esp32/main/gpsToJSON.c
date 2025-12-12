@@ -1,18 +1,18 @@
-#include "gps.h"
-#include <inttypes.h>
-#include <stdlib.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "json_object.h"
 #include <stdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <errno.h>
 #include <unistd.h>
 #include <time.h>
+#include "json_object.h"
 #include "json_tokener.h"
+#include "gps.h"
 
 // Flags to indicate which fields are present in memory
 typedef enum {

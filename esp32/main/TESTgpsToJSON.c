@@ -1,4 +1,5 @@
-#include "gpsToJSON.c"
+#include "gpsToJSON.h"
+#include <time.h>
 
 int main(void) {
     double lat = 38.0197207;
