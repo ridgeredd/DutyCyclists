@@ -369,7 +369,7 @@ int create_folder(const char *folder_name) {
     perror("Error creating folder");
     return -1;
 }
-
+/**
     // Example 1: Full coordinate data with all fields
     Coordinate coord1 = {1, 40.7128, -74.0060, 1699564800}; // New York with timestamp
     unsigned int full_flags = COORD_HAS_ID | COORD_HAS_LAT | COORD_HAS_LON | COORD_HAS_TIMESTAMP;
@@ -409,4 +409,4 @@ int create_folder(const char *folder_name) {
     printf("Entries with missing data will show 'null' in those fields.\n");
     
     return 0;
-}
+*/
