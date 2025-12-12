@@ -177,7 +177,7 @@ async function loadMarkersFromFile(filename) {
     }
 }
 
-async function loadAllMarkerFiles(maxFileNumber = 5) {
+async function loadAllMarkerFiles(maxFileNumber = 255) {
     let filesLoaded = 0;
     
     for (let i = 0; i <= maxFileNumber; i++) {
