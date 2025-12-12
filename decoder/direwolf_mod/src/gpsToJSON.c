@@ -246,56 +246,44 @@ int write_coordinates_to_json(const void *ptr, size_t length, int id, unsigned i
 //         fprintf(stderr, "Invalid parameters or insufficient data\n");
 //         return -1;
 //     }
-
 //     // Read fields from memory based on flags
 //     double latitude = 0.0, longitude = 0.0;
-//     long timestamp = 0;
-    
+//     long timestamp = 0;   
 //     size_t offset = 0;
-//     const unsigned char *data = (const unsigned char *)ptr;
-    
+//     const unsigned char *data = (const unsigned char *)ptr; 
 //     if (field_flags & COORD_HAS_LAT && offset + sizeof(double) <= length) {
 //         memcpy(&latitude, data + offset, sizeof(double));
 //         offset += sizeof(double);
-//     }
-    
+//     }  
 //     if (field_flags & COORD_HAS_LON && offset + sizeof(double) <= length) {
 //         memcpy(&longitude, data + offset, sizeof(double));
 //         offset += sizeof(double);
-//     }
-    
+//     }  
 //     if (field_flags & COORD_HAS_TIMESTAMP && offset + sizeof(long) <= length) {
 //         memcpy(&timestamp, data + offset, sizeof(long));
 //         offset += sizeof(long);
-//     }
-    
+//     }  
 //     // Read existing JSON file or create new root object
 //     struct json_object *root = NULL;
 //     FILE *fp = fopen(json_filename, "r");
-    
 //     if (fp) {
 //         fseek(fp, 0, SEEK_END);
 //         long fsize = ftell(fp);
 //         fseek(fp, 0, SEEK_SET);
-        
 //         char *file_content = malloc(fsize + 1);
 //         if (!file_content) {
 //             fclose(fp);
 //             return -1;
-//         }
-        
+//         }   
 //         fread(file_content, 1, fsize, fp);
 //         file_content[fsize] = '\0';
-//         fclose(fp);
-        
+//         fclose(fp);  
 //         // root = json_tokener_parse(file_content);
 //         root = json_tokener_parse(file_content);
 //         if (!root || !json_object_is_type(root, json_type_array)) {
 //         root = json_object_new_array();
 // }
-
-//         free(file_content);
-        
+//         free(file_content);   
 //         if (!root) {
 //             root = json_object_new_array();        }
 //     } else {
@@ -304,67 +292,53 @@ int write_coordinates_to_json(const void *ptr, size_t length, int id, unsigned i
 //             return -1;
 //         }
 //     }
-    
 //     // Create coordinate entry with null for missing fields
 //     struct json_object *coord_obj = json_object_new_object();
 //     if (!coord_obj) {
 //         json_object_put(root);
 //         return -1;
 //     }
-    
 //     json_object_object_add(coord_obj, "id", json_object_new_int(id));
-    
 //     // Add fields or null
 //     if (field_flags & COORD_HAS_LAT) {
 //         json_object_object_add(coord_obj, "latitude", json_object_new_double(latitude));
 //     } else {
 //         json_object_object_add(coord_obj, "latitude", NULL);
 //     }
-    
 //     if (field_flags & COORD_HAS_LON) {
 //         json_object_object_add(coord_obj, "longitude", json_object_new_double(longitude));
 //     } else {
 //         json_object_object_add(coord_obj, "longitude", NULL);
 //     }
-    
 //     if (field_flags & COORD_HAS_TIMESTAMP) {
 //         json_object_object_add(coord_obj, "timestamp", json_object_new_int64(timestamp));
 //     } else {
 //         json_object_object_add(coord_obj, "timestamp", NULL);
 //     }
-    
 //     // Create key from ID
 //     char key[32];
 //     snprintf(key, sizeof(key), "%d", id);
-    
 //     // Update or add entry
 //     struct json_object *existing = NULL;
 //     if (json_object_object_get_ex(root, key, &existing)) {
 //         json_object_object_del(root, key);
 //     }
-    
 //     json_object_object_add(root, key, coord_obj);
-    
 //     // Write to file
 //     const char *json_string = json_object_to_json_string_ext(root, 
 //                                                              JSON_C_TO_STRING_PRETTY);
-    
 //     fp = fopen(json_filename, "w");
 //     if (!fp) {
 //         fprintf(stderr, "Failed to open file for writing\n");
 //         json_object_put(root);
 //         return -1;
 //     }
-    
 //     fprintf(fp, "%s\n", json_string);
 //     fclose(fp);
 //     json_object_put(root);
-    
 //     printf("Successfully wrote coordinate (ID: %d) to %s\n", id, json_filename);
-    
 //     return 0;
 // }
-
 
 /**
     // Example 1: Full coordinate data with all fields
