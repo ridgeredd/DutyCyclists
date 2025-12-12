@@ -19,9 +19,11 @@
 #define PTT_ACTIVE_LVL                0             // active high (1) or low (0)
 #define PTT_INACTIVE_LVL              1 
 #define PTT_DISABLE_TIMER_MS          3 * TRANSMISSION_TIME_MS
+#define PTT_LONG_DISABLE_TIMER_MS     5 * TRANSMISSION_TIME_MS
 #define DEBOUNCE_MS                   100        // ignore isr requests within some recent amount of time to debounce signal
 
 static TimerHandle_t ptt_disable_timer = NULL; // Timer to reset ptt 
+static TimerHandle_t ptt_long_disable_timer = NULL; // Timer to reset ptt 
 static uint8_t ptt_level;
 static uint8_t ptt_disabled;
 
@@ -48,6 +50,13 @@ void key_ptt() {
     gpio_set_level(PTT_OUTPUT_PIN, PTT_ACTIVE_LVL); // set ptt active
     ptt_level = PTT_INACTIVE_LVL; // ? does this matter ?
     xTimerStart(ptt_disable_timer, 0);  // start timer to reset ptt
+}
+
+void key_ptt_long() {
+    disable_ptt_gpio();
+    gpio_set_level(PTT_OUTPUT_PIN, PTT_ACTIVE_LVL); // set ptt active
+    ptt_level = PTT_INACTIVE_LVL; // ? does this matter ?
+    xTimerStart(ptt_long_disable_timer, 0);
 }
 
 // TODO: we could have better organization. maybe move all callback logic into tx.c so that this is just a driver class
@@ -136,9 +145,18 @@ static void config_ptt_disable_timer() {
 
     ptt_disable_timer = xTimerCreate(
         "ptt_disable_timer",
-        pdMS_TO_TICKS(3 * TRANSMISSION_TIME_MS),
+        pdMS_TO_TICKS(PTT_DISABLE_TIMER_MS),
         pdFALSE,           // auto-reload = false
         NULL,
         ptt_disable_timer_callback
     );
+
+    ptt_long_disable_timer = xTimerCreate(
+        "ptt_disable_timer",
+        pdMS_TO_TICKS(PTT_LONG_DISABLE_TIMER_MS),
+        pdFALSE,           // auto-reload = false
+        NULL,
+        ptt_disable_timer_callback
+    );
+
 }
