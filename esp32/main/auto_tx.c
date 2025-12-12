@@ -1,5 +1,5 @@
 #define AUTO_TX_MS               10000       // milliseconds before resending signal
-#define AUTOMATIC_TRANSMISSION       1       // enables (1) or disables (0) auto transmission at regular interval
+#define AUTOMATIC_TRANSMISSION       0       // enables (1) or disables (0) auto transmission at regular interval
 
 #include "auto_tx.h"
 //#include <inttypes.h>

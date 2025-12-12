@@ -144,7 +144,7 @@ static void gps_task(void *arg)
         if (len > 0) {
             for (int i = 0; i < len; i++) {
                 char c = (char)uart_buf[i];
-                printf("%c", c);
+                //printf("%c", c);
                 // NMEA sentences end in \r\n; accept either
                 if (c == '\n' || c == '\r') {
                     if (line_pos > 0) {
