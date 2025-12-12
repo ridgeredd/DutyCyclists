@@ -1,4 +1,9 @@
+#ifndef GPS_H
+#define GPS_H
+
 #include <stdbool.h>
+#include <stdint.h>
+#include <inttypes.h>
 
 typedef struct {
     double latitude;   // decimal degrees (+north, -south)
@@ -11,10 +16,17 @@ typedef struct {
 /**
  * starts the GPS UART task. Call once during init
  */
-void gps_start_task(void);
+void gps_init();
+
+// Fills the buffer with 8 bytes of lat/lng
+void get_gps(uint8_t *bytes);
+
+
 
 /**
  * 
  * returns true if a valid fix was returned (out filled), false otherwise.
  */
-bool gps_get_fix(gnss_data_t *out);
+//bool gps_get_fix(gnss_data_t *out);
+
+#endif
