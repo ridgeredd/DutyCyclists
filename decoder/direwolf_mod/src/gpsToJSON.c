@@ -90,8 +90,8 @@ static void format_atom_time(long unix_ts, char *out, size_t out_size) {
 
 // Read coordinates from memory, convert to lat/lon, and write to JSON file
 // Missing fields will be added as null entries in the JSON
-int write_coordinates_to_json(const void *ptr, size_t length, int id, unsigned int field_flags) {
-    if (!ptr) {
+int write_coordinates_to_json(const gnss_data_t *coord, size_t length, int id, unsigned int field_flags) {
+    if (!coord) {
         fprintf(stderr, "Invalid parameters\n");
         return -1;
     }
@@ -114,32 +114,6 @@ int write_coordinates_to_json(const void *ptr, size_t length, int id, unsigned i
     
     
     // Read coordinate data from memory based on what's available
-    gnss_data_t coord = {0};
-    coord.id = id;
-    
-    size_t offset = 0;
-    const unsigned char *data = (const unsigned char *)ptr;
-    
-    // Read fields in order based on flags
-    if (field_flags & COORD_HAS_ID && offset + sizeof(int) <= length) {
-        memcpy(&coord.id, data + offset, sizeof(int));
-        offset += sizeof(int);
-    }
-    
-    if (field_flags & COORD_HAS_LAT && offset + sizeof(double) <= length) {
-        memcpy(&coord.latitude, data + offset, sizeof(double));
-        offset += sizeof(double);
-    }
-    
-    if (field_flags & COORD_HAS_LON && offset + sizeof(double) <= length) {
-        memcpy(&coord.longitude, data + offset, sizeof(double));
-        offset += sizeof(double);
-    }
-    
-    if (field_flags & COORD_HAS_TIMESTAMP && offset + sizeof(long) <= length) {
-        memcpy(&coord.timestamp, data + offset, sizeof(long));
-        offset += sizeof(long);
-    }
     
     // Read existing JSON file or create new root object
     struct json_object *root = NULL;
@@ -187,18 +161,18 @@ int write_coordinates_to_json(const void *ptr, size_t length, int id, unsigned i
     }
     
     // Add ID (always present)
-    json_object_object_add(coord_obj, "id", json_object_new_int(coord.id));
+    json_object_object_add(coord_obj, "id", json_object_new_int(coord->id));
     
     // Add latitude or null
     if (field_flags & COORD_HAS_LAT) {
-        json_object_object_add(coord_obj, "latitude", json_object_new_double(coord.latitude));
+        json_object_object_add(coord_obj, "latitude", json_object_new_double(coord->latitude));
     } else {
         json_object_object_add(coord_obj, "latitude", NULL);
     }
     
     // Add longitude or null
     if (field_flags & COORD_HAS_LON) {
-        json_object_object_add(coord_obj, "longitude", json_object_new_double(coord.longitude));
+        json_object_object_add(coord_obj, "longitude", json_object_new_double(coord->longitude));
     } else {
         json_object_object_add(coord_obj, "longitude", NULL);
     }
@@ -206,7 +180,7 @@ int write_coordinates_to_json(const void *ptr, size_t length, int id, unsigned i
     // Add timestamp or null
     if (field_flags & COORD_HAS_TIMESTAMP) {
         char atom_ts[32];
-        format_atom_time(coord.timestamp, atom_ts, sizeof(atom_ts));
+        format_atom_time(coord->timestamp, atom_ts, sizeof(atom_ts));
         json_object_object_add(coord_obj, "timestamp", json_object_new_string(atom_ts));
     } else {
         json_object_object_add(coord_obj, "timestamp", NULL);
@@ -230,7 +204,7 @@ int write_coordinates_to_json(const void *ptr, size_t length, int id, unsigned i
     // Clean up
     json_object_put(root);
     
-    printf("Successfully wrote coordinate (ID: %d) to %s\n", coord.id, json_filename);
+    printf("Successfully wrote coordinate (ID: %d) to %s\n", coord->id, json_filename);
     
     return 0;
 }
