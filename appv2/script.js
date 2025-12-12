@@ -266,31 +266,31 @@ async function loadAllMarkerFiles(maxFileNumber = 255) {
 
 
 // Event listeners
-document.getElementById('addMarker').addEventListener('click', () => {
-    const lat = parseFloat(document.getElementById('latitude').value);
-    const lng = parseFloat(document.getElementById('longitude').value);
+// document.getElementById('addMarker').addEventListener('click', () => {
+//     const lat = parseFloat(document.getElementById('latitude').value);
+//     const lng = parseFloat(document.getElementById('longitude').value);
     
-    if (isNaN(lat) || isNaN(lng)) {
-        alert('Please enter valid latitude and longitude values');
-        return;
-    }
+//     if (isNaN(lat) || isNaN(lng)) {
+//         alert('Please enter valid latitude and longitude values');
+//         return;
+//     }
     
-    if (lat < -90 || lat > 90) {
-        alert('Latitude must be between -90 and 90');
-        return;
-    }
+//     if (lat < -90 || lat > 90) {
+//         alert('Latitude must be between -90 and 90');
+//         return;
+//     }
     
-    if (lng < -180 || lng > 180) {
-        alert('Longitude must be between -180 and 180');
-        return;
-    }
+//     if (lng < -180 || lng > 180) {
+//         alert('Longitude must be between -180 and 180');
+//         return;
+//     }
     
-    addMarker(lat, lng);
+//     addMarker(lat, lng);
     
-    // Clear inputs
-    document.getElementById('latitude').value = '';
-    document.getElementById('longitude').value = '';
-});
+//     // Clear inputs
+//     document.getElementById('latitude').value = '';
+//     document.getElementById('longitude').value = '';
+// });
 
 document.getElementById('clearMarkers').addEventListener('click', () => {
     if (markers.length === 0) {
@@ -298,17 +298,18 @@ document.getElementById('clearMarkers').addEventListener('click', () => {
         return;
     }
     
-    if (confirm('Are you sure you want to clear all markers?')) {
+    if (confirm('Are you sure you want to refresh all markers?')) {
         clearAllMarkers();
+        location.reload();
     }
 });
 
 // Allow Enter key to add marker
-document.getElementById('longitude').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        document.getElementById('addMarker').click();
-    }
-});
+// document.getElementById('longitude').addEventListener('keypress', (e) => {
+//     if (e.key === 'Enter') {
+//         document.getElementById('addMarker').click();
+//     }
+// });
 
 // Load saved markers on page load
 loadMarkers();
