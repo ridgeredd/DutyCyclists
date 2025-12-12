@@ -66,15 +66,15 @@ int duty_cyclists_decode(unsigned char frame[], int frame_len) {
     printf("\n\n");
     
     uint8_t id = frame[0];
-    uint32_t lat_int =  frame[1] << 24 |
-                        frame[2] << 16 |
-                        frame[3] << 8 |
-                        frame[4];
+    uint32_t lat_int =  frame[4] << 24 |
+                        frame[3] << 16 |
+                        frame[2] << 8 |
+                        frame[1];
 
-    uint32_t lon_int =  frame[5] << 24 |
-                        frame[6] << 16 |
-                        frame[7] << 8 |
-                        frame[8];
+    uint32_t lon_int =  frame[8] << 24 |
+                        frame[7] << 16 |
+                        frame[6] << 8  |
+                        frame[5];
 
     float lat = ((double)lat_int * 180.0 / 4294967295.0) - 90.0;
     float lon = ((double)lon_int * 360.0 / 4294967295.0) - 180.0;
