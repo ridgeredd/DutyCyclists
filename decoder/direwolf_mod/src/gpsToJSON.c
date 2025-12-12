@@ -22,18 +22,6 @@ typedef enum {
     COORD_HAS_TIMESTAMP = (1 << 3)
 } CoordFieldFlags;
 
-
-static gnss_data_t byteToGPS(uint8_t *bytes, size_t length){
-    gnss_data_t data;
-    
-    // decode data 
-    // currently: reads from memory using pointer and use length for blocking size
-    
-    //return struct of data 
-
-    return data;
-}
-
 // additional function for converting struct to json string
 // for function, edit json per id if existing, else make new json 
 
@@ -47,12 +35,21 @@ int write_coordinates_to_json(const void *ptr, size_t length, int id, unsigned i
         return -1;
     }
 
-    create_folder("GPSData");
+    // create_folder("GPSData");
+    // char FilePath[256];
+    // getcwd(FilePath, sizeof(FilePath));
+    // char GPSid[512];
+    // sprintf(GPSid, "%d", id);
+    // find_or_create_json(FilePath, GPSid);
+
+    create_folder("../../GPSData");
     char FilePath[256];
     getcwd(FilePath, sizeof(FilePath));
-    char GPSid[512];
+    char GPSFolderPath[512];
+    snprintf(GPSFolderPath, sizeof(GPSFolderPath), "%s/%s", FilePath, "../../GPSData");
+    char GPSid[64];
     sprintf(GPSid, "%d", id);
-    find_or_create_json(FilePath, GPSid);
+    find_or_create_json(GPSFolderPath, GPSid);
     
     // Read coordinate data from memory based on what's available
     gnss_data_t coord = {0};
@@ -360,7 +357,8 @@ int create_folder(const char *folder_name) {
         }
     #else
         // Unix/Linux/Mac - requires permissions parameter
-        if (mkdir(folder_name, 0755) == 0) {
+        if (mkdir
+            (folder_name, 0755) == 0) {
             // printf("Folder '%s' created successfully.\n", folder_name);
             return 0;
         }
