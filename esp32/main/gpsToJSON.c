@@ -22,18 +22,6 @@ typedef enum {
     COORD_HAS_TIMESTAMP = (1 << 3)
 } CoordFieldFlags;
 
-
-static gnss_data_t byteToGPS(uint8_t *bytes, size_t length){
-    gnss_data_t data;
-    
-    // decode data 
-    // currently: reads from memory using pointer and use length for blocking size
-    
-    //return struct of data 
-
-    return data;
-}
-
 // additional function for converting struct to json string
 // for function, edit json per id if existing, else make new json 
 
@@ -56,14 +44,14 @@ int write_coordinates_to_json(const void *ptr, size_t length, int id, unsigned i
     
     // Read coordinate data from memory based on what's available
     gnsss_data_t coord = {0};
-    coord.id = id;
+    // coord.id = id;
     
     size_t offset = 0;
     const unsigned char *data = (const unsigned char *)ptr;
     
     // Read fields in order based on flags
     if (field_flags & COORD_HAS_ID && offset + sizeof(int) <= length) {
-        memcpy(&coord.id, data + offset, sizeof(int));
+        memcpy(&id, data + offset, sizeof(int));
         offset += sizeof(int);
     }
     
@@ -369,7 +357,7 @@ int create_folder(const char *folder_name) {
     perror("Error creating folder");
     return -1;
 }
-
+/**
     // Example 1: Full coordinate data with all fields
     Coordinate coord1 = {1, 40.7128, -74.0060, 1699564800}; // New York with timestamp
     unsigned int full_flags = COORD_HAS_ID | COORD_HAS_LAT | COORD_HAS_LON | COORD_HAS_TIMESTAMP;
@@ -409,4 +397,4 @@ int create_folder(const char *folder_name) {
     printf("Entries with missing data will show 'null' in those fields.\n");
     
     return 0;
-}
+    */
