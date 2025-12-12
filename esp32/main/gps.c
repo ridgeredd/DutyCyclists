@@ -184,6 +184,7 @@ static void gps_task(void *arg)
 /* starter */
 void gps_init(void)
 {
+    vTaskDelay(pdMS_TO_TICKS(2000));  // let GPS boot
     xTaskCreate(gps_task, "gps_task", 4096, NULL, 5, NULL);
 }
 

@@ -165,16 +165,16 @@ int write_coordinates_to_json(const gnss_data_t *coord, unsigned int field_flags
     
     // Add latitude or null
     if (field_flags & COORD_HAS_LAT) {
-        json_object_object_add(coord_obj, "latitude", json_object_new_double(coord->latitude));
+        json_object_object_add(coord_obj, "lat", json_object_new_double(coord->latitude));
     } else {
-        json_object_object_add(coord_obj, "latitude", NULL);
+        json_object_object_add(coord_obj, "lat", NULL);
     }
     
     // Add longitude or null
     if (field_flags & COORD_HAS_LON) {
-        json_object_object_add(coord_obj, "longitude", json_object_new_double(coord->longitude));
+        json_object_object_add(coord_obj, "lng", json_object_new_double(coord->longitude));
     } else {
-        json_object_object_add(coord_obj, "longitude", NULL);
+        json_object_object_add(coord_obj, "lng", NULL);
     }
     
     // Add timestamp or null
