@@ -10,6 +10,7 @@ include_directories(
   ${PORTAUDIO_INCLUDE_DIRS}
   ${SNDIO_INCLUDE_DIRS}
   ${CUSTOM_GEOTRANZ_DIR}
+  ${CUSTOM_JSON_C_MASTER_DIR}
   ${CUSTOM_HIDAPI_DIR}
   )
 
@@ -147,6 +148,7 @@ add_executable(direwolf
 
 target_link_libraries(direwolf
   ${GEOTRANZ_LIBRARIES}
+  ${JSON_C_MASTER_LIBRARIES}
   ${MISC_LIBRARIES}
   ${REGEX_LIBRARIES}
   ${HIDAPI_LIBRARIES}

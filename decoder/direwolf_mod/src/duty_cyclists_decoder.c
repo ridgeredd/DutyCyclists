@@ -1,5 +1,5 @@
 #include "direwolf.h"
-//#include "gps.h"
+#include "gps.h"
 #include <stdint.h>
 #include <stdio.h>
 #include "duty_cyclists_decoder.h"
