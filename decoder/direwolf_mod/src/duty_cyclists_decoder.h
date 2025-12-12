@@ -1,6 +1,8 @@
 #ifndef DUTY_CYCLISTS_DECODER_H
 #define DUTY_CYCLISTS_DECODER_H
 
+#include <inttypes.h>
+
 /*
  *  frame_buf a frame of bytes after NRZI, bit unstuffing, and removing start/stop
  *  frame_len is length of frame_buf
@@ -9,13 +11,13 @@
 int duty_cyclists_decode(unsigned char frame_buf[], int frame_len);
 
 // Right now, we only have one radio in network
-extern unsigned char DUTY_CYCLISTS_RADIO_ID;
+extern const uint8_t DUTY_CYCLISTS_RADIO_ID;
 
 /*
 Duty Cyclists packet standard:
 _________________________________________________________________________
 |               |               |               |                       |
-|   Byte 0      |   Bytes 1-5   |   Bytes 6-10  |   Bytes 11-17         |
+|   Byte 0      |   Bytes 1-4   |   Bytes 5-8   |   Bytes 9-15          |
 |   Radio ID    |   Latitude    |   Longitude   |   Error Correction    |
 |_______________|_______________|_______________|_______________________|
 

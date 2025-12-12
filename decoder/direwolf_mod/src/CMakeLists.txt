@@ -381,6 +381,7 @@ add_executable(atest
 
 target_link_libraries(atest
   ${MISC_LIBRARIES}
+  ${JSON_C_MASTER_LIBRARIES}
   ${GPSD_LIBRARIES}
   ${REGEX_LIBRARIES}
   Threads::Threads
