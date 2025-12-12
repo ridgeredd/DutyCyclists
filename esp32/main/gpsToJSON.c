@@ -11,8 +11,8 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <unistd.h>
-
-
+#include <time.h>
+#include "json_tokener.h"
 
 // Flags to indicate which fields are present in memory
 typedef enum {
@@ -22,10 +22,64 @@ typedef enum {
     COORD_HAS_TIMESTAMP = (1 << 3)
 } CoordFieldFlags;
 
-// additional function for converting struct to json string
-// for function, edit json per id if existing, else make new json 
+int find_or_create_json(const char *folder_path, const char *json_filename) {
+    char filepath[512];
+    
+    // Construct the full file path
+    snprintf(filepath, sizeof(filepath), "%s/%s", folder_path, json_filename);
+    
+    // Check if file exists
+    FILE *file = fopen(filepath, "r");
+    if (file != NULL) {
+        printf("JSON file '%s' found in folder '%s'.\n", json_filename, folder_path);
+        fclose(file);
+        return 0;
+    }
+    
+    // File doesn't exist, create it
+    file = fopen(filepath, "w");
+    if (file == NULL) {
+        perror("Error creating JSON file");
+        return -1;
+    }
+    
+    // Write empty JSON object
+    fprintf(file, "{}");
+    fclose(file);
+    
+    printf("JSON file '%s' created in folder '%s'.\n", json_filename, folder_path);
+    return 0;
+}
 
-
+// Function to create a folder in the local directory
+// Returns 0 on success, -1 on failure
+int create_folder(const char *folder_name) {
+    struct stat st = {0};
+    
+    // Check if folder already exists
+    if (stat(folder_name, &st) == 0 && S_ISDIR(st.st_mode)) {
+        // printf("Folder '%s' already exists. Nothing to do.\n", folder_name);
+        return 1;
+    }
+    
+    #ifdef _WIN32
+        // Windows
+        if (mkdir(folder_name) == 0) {
+            // printf("Folder '%s' created successfully.\n", folder_name);
+            return 0;
+        }
+    #else
+        // Unix/Linux/Mac - requires permissions parameter
+        if (mkdir
+            (folder_name, 0755) == 0) {
+            // printf("Folder '%s' created successfully.\n", folder_name);
+            return 0;
+        }
+    #endif
+    
+    perror("Error creating folder");
+    return -1;
+}
 
 // Read coordinates from memory, convert to lat/lon, and write to JSON file
 // Missing fields will be added as null entries in the JSON
@@ -35,23 +89,33 @@ int write_coordinates_to_json(const void *ptr, size_t length, int id, unsigned i
         return -1;
     }
 
-    create_folder("GPSData");
-    char FilePath[256]
-    getcwd(FilePath, sizeof(FilePath));
-    char GPSid[512];
-    sprintf(GPSid, "%d", id);
-    find_or_create_json(FilePath, GPSid)
+    // Create folder
+    const char *GPSFolderPath = "../../GPSData";
+    create_folder(GPSFolderPath);
+
+    // Build GPS id string
+    char GPSid[64];
+    snprintf(GPSid, sizeof(GPSid), "%d.json", id);   // file is "1.json", "2.json", etc.
+
+    // Build full path to the JSON file
+    char json_filename[512];
+    snprintf(json_filename, sizeof(json_filename), "%s/%s", GPSFolderPath, GPSid);
+
+    // Ensure the JSON file exists
+    find_or_create_json(GPSFolderPath, GPSid);
+
+    
     
     // Read coordinate data from memory based on what's available
-    gnsss_data_t coord = {0};
-    // coord.id = id;
+    gnss_data_t coord = {0};
+    coord.id = id;
     
     size_t offset = 0;
     const unsigned char *data = (const unsigned char *)ptr;
     
     // Read fields in order based on flags
     if (field_flags & COORD_HAS_ID && offset + sizeof(int) <= length) {
-        memcpy(&id, data + offset, sizeof(int));
+        memcpy(&coord.id, data + offset, sizeof(int));
         offset += sizeof(int);
     }
     
@@ -300,63 +364,7 @@ int write_raw_coordinates_to_json(const void *ptr, size_t length, int id,
     return 0;
 }
 
-int find_or_create_json(const char *folder_path, const char *json_filename) {
-    char filepath[512];
-    
-    // Construct the full file path
-    snprintf(filepath, sizeof(filepath), "%s/%s", folder_path, json_filename);
-    
-    // Check if file exists
-    FILE *file = fopen(filepath, "r");
-    if (file != NULL) {
-        printf("JSON file '%s' found in folder '%s'.\n", json_filename, folder_path);
-        fclose(file);
-        return 0;
-    }
-    
-    // File doesn't exist, create it
-    file = fopen(filepath, "w");
-    if (file == NULL) {
-        perror("Error creating JSON file");
-        return -1;
-    }
-    
-    // Write empty JSON object
-    fprintf(file, "{}");
-    fclose(file);
-    
-    printf("JSON file '%s' created in folder '%s'.\n", json_filename, folder_path);
-    return 0;
-}
 
-// Function to create a folder in the local directory
-// Returns 0 on success, -1 on failure
-int create_folder(const char *folder_name) {
-    struct stat st = {0};
-    
-    // Check if folder already exists
-    if (stat(folder_name, &st) == 0 && S_ISDIR(st.st_mode)) {
-        // printf("Folder '%s' already exists. Nothing to do.\n", folder_name);
-        return 1;
-    }
-    
-    #ifdef _WIN32
-        // Windows
-        if (mkdir(folder_name) == 0) {
-            // printf("Folder '%s' created successfully.\n", folder_name);
-            return 0;
-        }
-    #else
-        // Unix/Linux/Mac - requires permissions parameter
-        if (mkdir(folder_name, 0755) == 0) {
-            // printf("Folder '%s' created successfully.\n", folder_name);
-            return 0;
-        }
-    #endif
-    
-    perror("Error creating folder");
-    return -1;
-}
 /**
     // Example 1: Full coordinate data with all fields
     Coordinate coord1 = {1, 40.7128, -74.0060, 1699564800}; // New York with timestamp
@@ -397,4 +405,4 @@ int create_folder(const char *folder_name) {
     printf("Entries with missing data will show 'null' in those fields.\n");
     
     return 0;
-    */
+*/
