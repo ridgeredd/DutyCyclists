@@ -81,6 +81,13 @@ int create_folder(const char *folder_name) {
     return -1;
 }
 
+static void format_atom_time(long unix_ts, char *out, size_t out_size) {
+    time_t t = (time_t)unix_ts;
+    struct tm gm;
+    gmtime_r(&t, &gm);  // Convert to UTC
+    strftime(out, out_size, "%Y-%m-%dT%H:%M:%SZ", &gm);
+}
+
 // Read coordinates from memory, convert to lat/lon, and write to JSON file
 // Missing fields will be added as null entries in the JSON
 int write_coordinates_to_json(const void *ptr, size_t length, int id, unsigned int field_flags) {
@@ -90,7 +97,7 @@ int write_coordinates_to_json(const void *ptr, size_t length, int id, unsigned i
     }
 
     // Create folder
-    const char *GPSFolderPath = "../../GPSData";
+    const char *GPSFolderPath = "../../../appv2/GPSData";
     create_folder(GPSFolderPath);
 
     // Build GPS id string
@@ -159,14 +166,14 @@ int write_coordinates_to_json(const void *ptr, size_t length, int id, unsigned i
         free(file_content);
         
         if (!root) {
-            fprintf(stderr, "Failed to parse existing JSON file\n");
-            root = json_object_new_object();
+            fprintf(stderr, "Existing JSON invalid or not an array. Creating new array.\n");
+            root = json_object_new_array();
         }
     } else {
         // Create new JSON object
-        root = json_object_new_object();
+        root = json_object_new_array();
         if (!root) {
-            fprintf(stderr, "Failed to create JSON object\n");
+            fprintf(stderr, "Failed to create JSON array\n");
             return -1;
         }
     }
@@ -197,25 +204,15 @@ int write_coordinates_to_json(const void *ptr, size_t length, int id, unsigned i
     
     // Add timestamp or null
     if (field_flags & COORD_HAS_TIMESTAMP) {
-        json_object_object_add(coord_obj, "timestamp", json_object_new_int64(coord.timestamp));
+        char atom_ts[32];
+        format_atom_time(coord.timestamp, atom_ts, sizeof(atom_ts));
+        json_object_object_add(coord_obj, "timestamp", json_object_new_string(atom_ts));
     } else {
         json_object_object_add(coord_obj, "timestamp", NULL);
     }
-    
-    // Create key string from ID
-    char key[32];
-    snprintf(key, sizeof(key), "%d", id);
-    
-    // Check if entry exists and update or add new
-    struct json_object *existing = NULL;
-    if (json_object_object_get_ex(root, key, &existing)) {
-        // Entry exists, delete old one
-        json_object_object_del(root, key);
-    }
-    
-    // Add new/updated entry
-    json_object_object_add(root, key, coord_obj);
-    
+
+    json_object_array_add(root, coord_obj);
+
     // Write to file with pretty formatting
     const char *json_string = json_object_to_json_string_ext(root, 
                                                              JSON_C_TO_STRING_PRETTY);
@@ -291,7 +288,12 @@ int write_raw_coordinates_to_json(const void *ptr, size_t length, int id,
         file_content[fsize] = '\0';
         fclose(fp);
         
+        // root = json_tokener_parse(file_content);
         root = json_tokener_parse(file_content);
+if (!root || !json_object_is_type(root, json_type_array)) {
+    root = json_object_new_array();
+}
+
         free(file_content);
         
         if (!root) {

@@ -80,6 +80,11 @@ int duty_cyclists_decode(unsigned char frame[], int frame_len) {
     float lon = ((double)lon_int * 360.0 / 4294967295.0) - 180.0;
 
     time_t timestamp = time(NULL); //grabs current system time
+    struct tm atom;
+
+    gmtime_r(&now, &atom);   // Convert to UTC (thread-safe version)
+
+    strftime(buf, bufsize, "%Y-%m-%dT%H:%M:%SZ", &gm);
     struct {
         double lat;
         double lon;
