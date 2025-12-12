@@ -40,7 +40,15 @@ static const uint8_t PTT_KEY_AUTO_MAX_COUNT = 10;
 // helper functions to determine if were pressed / released from flags
 static inline uint8_t was_ptt_pressed() { return !PTT_level && PTT_prev_level; }
 static inline uint8_t was_ptt_released() { return PTT_level && !PTT_prev_level; }
-static inline void update_ptt() { PTT_prev_level = PTT_level; PTT_level = get_ptt(); }
+static inline void update_ptt() { 
+
+    PTT_prev_level = PTT_level;
+    #if PTT_INTERRUPT_ENABLE
+    PTT_level = get_ptt(); 
+    #else
+    PTT_level = poll_ptt();
+    #endif
+}
 
 // Static declarations
 static FSM_State fsm_idle();

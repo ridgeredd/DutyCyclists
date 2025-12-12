@@ -11,6 +11,7 @@
 #include <string.h>
 #include "sdkconfig.h"
 #include "gps.h"
+#include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 /*#include "esp_timer.h"
 #include "freertos/timers.h"
@@ -47,17 +48,18 @@ void app_main(void) {
     #endif
 
     gps_init(); // give gps enough time to boot up
-    vTaskDelay(pdMS_TO_TICKS(30000));
+    vTaskDelay(pdMS_TO_TICKS(3000));
 
     ptt_init();
     tx_init();
     auto_tx_init();
     fsm_init();
     
-
     #if AUTOMATIC_TRANSMISSION 
         config_auto_gps_timer();
     #endif
+
+    ESP_LOGI("main", "\nBOOTUP CONFIGUREd\n");
 
     while(1) {
 

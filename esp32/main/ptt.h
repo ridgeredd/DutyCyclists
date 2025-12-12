@@ -3,11 +3,16 @@
 
 #include <inttypes.h>
 
+#define PTT_INTERRUPT_ENABLE    1
+
 // Initializes ptt in and output pins as well as internal timers
 void ptt_init();
 
-// Returns ptt level
+// Returns ptt level as updated by isr
 uint8_t get_ptt();
+
+// Gets current value via pin
+uint8_t poll_ptt();
 
 // Activates ptt and starts timer to turn it off
 void key_ptt();

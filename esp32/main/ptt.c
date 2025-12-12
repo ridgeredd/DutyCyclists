@@ -12,7 +12,6 @@
 #include "esp_timer.h"
 #include "esp_log.h"
 
-
 #define PTT_IN_ENABLE                 1             // Monitor (1) or don't monitor (0) PTT presses
 #define PTT_INPUT_PIN                 GPIO_NUM_19
 #define PTT_OUTPUT_PIN                GPIO_NUM_18
@@ -42,6 +41,8 @@ void ptt_init() {
 }
 
 uint8_t get_ptt() { /*return gpio_get_level(PTT_INPUT_PIN);*/ return ptt_level; }
+
+uint8_t poll_ptt() { return gpio_get_level(PTT_INPUT_PIN); }
 
 // Sets ptt active and disables interrupts on ptt input pin. Starts timer to automatically reset it
 void key_ptt() {
@@ -77,7 +78,11 @@ static void config_ptt() {
 
     #if PTT_IN_ENABLE
     gpio_config_t ptt_in_conf = {
+        #if PTT_INTERRUPT_ENABLE
         .intr_type = GPIO_INTR_ANYEDGE,  // activates on any edge
+        #else
+        .intr_type = GPIO_INTR_DISABLE, // disabled
+        #endif
         .mode = GPIO_MODE_INPUT,
         .pin_bit_mask = (1ULL << PTT_INPUT_PIN),
         .pull_up_en = GPIO_PULLUP_ENABLE,      // floats ptt. radio should also, but this works better
@@ -99,7 +104,9 @@ static void config_ptt() {
     gpio_install_isr_service(0);
 
     // Attach handler
+    #if PTT_INTERRUPT_ENABLE
     gpio_isr_handler_add(PTT_INPUT_PIN, ptt_interrupt_handler, NULL);
+    #endif
 
     gpio_set_level(PTT_OUTPUT_PIN, PTT_INACTIVE_LVL);
 
