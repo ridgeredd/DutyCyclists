@@ -16,6 +16,8 @@
 
 #define DC_DEBUG    0
 
+#include <stdlib.h>
+
 // Flags to indicate which fields are present in memory
 typedef enum {
     COORD_HAS_ID        = (1 << 0),
@@ -33,7 +35,9 @@ int find_or_create_json(const char *folder_path, const char *json_filename) {
     // Check if file exists
     FILE *file = fopen(filepath, "r");
     if (file != NULL) {
+        #if DC_DEBUG
         printf("JSON file '%s' found in folder '%s'.\n", json_filename, folder_path);
+        #endif
         fclose(file);
         return 0;
     }
@@ -99,7 +103,9 @@ int write_coordinates_to_json(const gnss_data_t *coord, unsigned int field_flags
     }
 
     // Create folder
-    const char *GPSFolderPath = "../../../appv2/GPSData";
+    //const char *GPSFolderPath = "../../../appv2/GPSData";
+    char *GPSFolderPath = getenv("GPS_FOLDER_PATH");
+    //printf("%s", GPSFolderPath);
     create_folder(GPSFolderPath);
 
     // Build GPS id string
