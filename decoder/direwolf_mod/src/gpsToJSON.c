@@ -48,14 +48,14 @@ int write_coordinates_to_json(const void *ptr, size_t length, int id, unsigned i
     }
 
     create_folder("GPSData");
-    char FilePath[256]
+    char FilePath[256];
     getcwd(FilePath, sizeof(FilePath));
     char GPSid[512];
     sprintf(GPSid, "%d", id);
-    find_or_create_json(FilePath, GPSid)
+    find_or_create_json(FilePath, GPSid);
     
     // Read coordinate data from memory based on what's available
-    gnsss_data_t coord = {0};
+    gnss_data_t coord = {0};
     coord.id = id;
     
     size_t offset = 0;
