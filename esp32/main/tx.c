@@ -1,5 +1,6 @@
 #include "tx.h"
 #include "libfec/fec.h"
+#include "gps.h"
 #include "driver/i2s.h"
 #include <stdio.h>
 #include <math.h>
@@ -34,7 +35,7 @@ const double TRANSMISSION_TIME_MS   = (1000 * SAMPLES_PER_SYMBOL * 8 * TRANSMISS
 const double MIN_INTERVAL_MS        = 4 * TRANSMISSION_TIME_MS;   // Don't allow transmissions within min interval of eachother 
 const double BAUD_RATE              = SAMPLE_RATE / SAMPLES_PER_SYMBOL;
 const double BIT_RATE               = BAUD_RATE * BITS_PER_SYMBOL;
-const double TX_DISABLE_MS   = TRANSMISSION_TIME_MS;       // amount of time we disabled transmission for after finishing
+const double TX_DISABLE_MS          = TRANSMISSION_TIME_MS;       // amount of time we disabled transmission for after finishing
 
 // Encoder handle for reed-solomon
 static void* rs_encoder = NULL;
@@ -46,7 +47,7 @@ static TaskHandle_t tx_gps_handle = NULL;         // task handle to request tran
 static TimerHandle_t tx_reenable_timer = NULL;    // time to wait until reenabling transmission to prevent spamming; optional
 
 // TODO: implement in a gps class; currently stubbed
-static void get_gps(uint8_t *bytes) {
+static void get_gps_stub(uint8_t *bytes) {
     for (uint8_t count = 0; count < PAYLOAD_NBYTES - 1; count++) {
         bytes[count] = count;
     }
@@ -67,7 +68,7 @@ void tx_init() {
     config_rs();
     config_reenable_tx_timer();
 
-    xTaskCreate(tx_gps_task, "gps_task", 4096, NULL, 3 /*priority*/, &tx_gps_handle);
+    xTaskCreate(tx_gps_task, "tx_task", 4096, NULL, 3 /*priority*/, &tx_gps_handle);
 }
 
 // Wake an asynch task to send gps
@@ -158,7 +159,7 @@ static void tx_bytes(uint8_t *bytes, uint32_t nbytes, int16_t *buf) {
 
     uint8_t nrzi_bit;
     if( bit ) { nrzi_bit = prev_nrzi; } else { nrzi_bit = !prev_nrzi; }
-    printf("%d", nrzi_bit);
+    //printf("%d", nrzi_bit);
     uint8_t num_ones = 0;   // used for bit stuffing; after 5 ones insert a 0; not used in first / last byte
     float freq = SYMBOL_FREQS[nrzi_bit];
 

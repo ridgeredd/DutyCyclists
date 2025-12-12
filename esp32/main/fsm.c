@@ -91,7 +91,7 @@ void fsm_main() {
         default:                next_state = FSM_IDLE;
 
     }
-    ESP_LOGI("fsm", "%d\n", next_state);
+    if( cur_state != next_state ) { ESP_LOGI("fsm", "%d", next_state); }
     cur_state = next_state;
     FSM_flag_reset_all();
 

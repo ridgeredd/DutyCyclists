@@ -14,8 +14,8 @@
 
 
 #define PTT_IN_ENABLE                 1             // Monitor (1) or don't monitor (0) PTT presses
-#define PTT_INPUT_PIN                 GPIO_NUM_4
-#define PTT_OUTPUT_PIN                GPIO_NUM_5
+#define PTT_INPUT_PIN                 GPIO_NUM_19
+#define PTT_OUTPUT_PIN                GPIO_NUM_18
 #define PTT_ACTIVE_LVL                0             // active high (1) or low (0)
 #define PTT_INACTIVE_LVL              1 
 #define PTT_DISABLE_TIMER_MS          3 * TRANSMISSION_TIME_MS

@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "sdkconfig.h"
+#include "gps.h"
 #include "freertos/FreeRTOS.h"
 /*#include "esp_timer.h"
 #include "freertos/timers.h"
@@ -49,6 +50,7 @@ void app_main(void) {
     tx_init();
     auto_tx_init();
     fsm_init();
+    gps_init();
 
     #if AUTOMATIC_TRANSMISSION 
         config_auto_gps_timer();
