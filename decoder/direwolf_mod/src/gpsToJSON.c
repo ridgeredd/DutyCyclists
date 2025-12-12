@@ -85,7 +85,7 @@ static void format_atom_time(long unix_ts, char *out, size_t out_size) {
     time_t t = (time_t)unix_ts;
     struct tm gm;
     gmtime_r(&t, &gm);  // Convert to UTC
-    strftime(out, out_size, "%Y-%m-%dT%H:%M:%SZ", &gm);
+    strftime(out, out_size, "%Y-%m-%dT%H:%M:%S", &gm);
 }
 
 // Read coordinates from memory, convert to lat/lon, and write to JSON file
