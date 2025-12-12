@@ -86,7 +86,7 @@ int duty_cyclists_decode(unsigned char frame[], int frame_len) {
     coord.longitude = lon;
     coord.id = id;
     coord.timestamp = timestamp;
-    write_coordinates_to_json(&coord, sizeof(coord), id ,0x7);
+    write_coordinates_to_json(&coord, 0xF);
 
     printf("lat: %f, lon: %f\n", lat, lon);
 

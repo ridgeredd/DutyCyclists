@@ -90,7 +90,7 @@ static void format_atom_time(long unix_ts, char *out, size_t out_size) {
 
 // Read coordinates from memory, convert to lat/lon, and write to JSON file
 // Missing fields will be added as null entries in the JSON
-int write_coordinates_to_json(const gnss_data_t *coord, size_t length, int id, unsigned int field_flags) {
+int write_coordinates_to_json(const gnss_data_t *coord, unsigned int field_flags) {
     if (!coord) {
         fprintf(stderr, "Invalid parameters\n");
         return -1;
@@ -102,7 +102,7 @@ int write_coordinates_to_json(const gnss_data_t *coord, size_t length, int id, u
 
     // Build GPS id string
     char GPSid[64];
-    snprintf(GPSid, sizeof(GPSid), "%d.json", id);   // file is "1.json", "2.json", etc.
+    snprintf(GPSid, sizeof(GPSid), "%d.json", coord->id);   // file is "1.json", "2.json", etc.
 
     // Build full path to the JSON file
     char json_filename[512];
