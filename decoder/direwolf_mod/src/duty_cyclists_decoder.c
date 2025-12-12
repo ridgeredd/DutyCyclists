@@ -7,7 +7,6 @@
 #include "json_object.h"
 #include "gpsToJSON.c"
 #include <time.h>
-#include <inttypes.h>
 
 const uint8_t DUTY_CYCLISTS_RADIO_ID = 0x67;
 
@@ -67,17 +66,15 @@ int duty_cyclists_decode(unsigned char frame[], int frame_len) {
     printf("\n\n");
     
     uint8_t id = frame[0];
-    uint32_t lat_int =  frame[1] << 32 | 
-                        frame[2] << 24 |
-                        frame[3] << 16 |
-                        frame[4] << 8 |
-                        frame[5];
+    uint32_t lat_int =  frame[1] << 24 |
+                        frame[2] << 16 |
+                        frame[3] << 8 |
+                        frame[4];
 
-    uint32_t lon_int =  frame[6] << 32 | 
-                        frame[7] << 24 |
-                        frame[8] << 16 |
-                        frame[9] << 8 |
-                        frame[10];
+    uint32_t lon_int =  frame[5] << 24 |
+                        frame[6] << 16 |
+                        frame[7] << 8 |
+                        frame[8];
 
     float lat = ((double)lat_int * 180.0 / 4294967295.0) - 90.0;
     float lon = ((double)lon_int * 360.0 / 4294967295.0) - 180.0;
@@ -87,8 +84,8 @@ int duty_cyclists_decode(unsigned char frame[], int frame_len) {
         double lat;
         double lon;
         long timestamp;
-    } coord = {lat ,lon ,timestamp}
-    write_coordinates_to_json(&coord, sizeof(coord), id ,0x7)
+    } coord = {lat ,lon ,timestamp};
+    write_coordinates_to_json(&coord, sizeof(coord), id ,0x7);
 
     printf("lat: %f, lon: %f\n", lat, lon);
 
