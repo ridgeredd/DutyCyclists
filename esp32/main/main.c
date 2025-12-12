@@ -46,11 +46,14 @@ void app_main(void) {
         ESP_LOGI(TAG, "Ensure that minimum interval time between transmission is greater than transmission time");
     #endif
 
+    gps_init(); // give gps enough time to boot up
+    vTaskDelay(pdMS_TO_TICKS(30000));
+
     ptt_init();
     tx_init();
     auto_tx_init();
     fsm_init();
-    gps_init();
+    
 
     #if AUTOMATIC_TRANSMISSION 
         config_auto_gps_timer();

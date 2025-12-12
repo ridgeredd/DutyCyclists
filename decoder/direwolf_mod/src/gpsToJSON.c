@@ -14,6 +14,8 @@
 #include <time.h>
 #include "json_tokener.h"
 
+#define DC_DEBUG    0
+
 // Flags to indicate which fields are present in memory
 typedef enum {
     COORD_HAS_ID        = (1 << 0),
@@ -204,7 +206,9 @@ int write_coordinates_to_json(const gnss_data_t *coord, unsigned int field_flags
     // Clean up
     json_object_put(root);
     
+    #if DC_DEBUG
     printf("Successfully wrote coordinate (ID: %d) to %s\n", coord->id, json_filename);
+    #endif
     
     return 0;
 }

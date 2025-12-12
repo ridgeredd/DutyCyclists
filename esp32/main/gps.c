@@ -122,9 +122,6 @@ static void gps_task(void *arg)
 {
     ESP_LOGI(TAG, "Starting GPS UART task (baud=%d)", GPS_BAUD_RATE);
 
-    // init mutex
-    latest_fix_mutex = xSemaphoreCreateMutex();
-
     // init uart
     uart_config_t uart_config = {
         .baud_rate = GPS_BAUD_RATE,
@@ -147,6 +144,7 @@ static void gps_task(void *arg)
         if (len > 0) {
             for (int i = 0; i < len; i++) {
                 char c = (char)uart_buf[i];
+                printf("%c", c);
                 // NMEA sentences end in \r\n; accept either
                 if (c == '\n' || c == '\r') {
                     if (line_pos > 0) {
@@ -184,7 +182,9 @@ static void gps_task(void *arg)
 /* starter */
 void gps_init(void)
 {
-    vTaskDelay(pdMS_TO_TICKS(2000));  // let GPS boot
+    // init mutex
+    latest_fix_mutex = xSemaphoreCreateMutex();
+      // let GPS boot
     xTaskCreate(gps_task, "gps_task", 4096, NULL, 5, NULL);
 }
 

@@ -59,11 +59,13 @@ int duty_cyclists_decode(unsigned char frame[], int frame_len) {
 
     if ( frame[0] != DUTY_CYCLISTS_RADIO_ID ) { return 0; }
 
+    #if DC_DEBUG
     printf("Success!\n");
     for (int i = 0; i < DUTY_CYCLISTS_PAYLOAD_LEN; i++) {
         printf("%02X ", frame[i]);
     }
     printf("\n\n");
+    #endif
     
     uint8_t id = frame[0];
     uint32_t lat_int =  frame[4] << 24 |
@@ -87,8 +89,9 @@ int duty_cyclists_decode(unsigned char frame[], int frame_len) {
     coord.id = id;
     coord.timestamp = timestamp;
     write_coordinates_to_json(&coord, 0xF);
-
+    #if DC_DEBUG
     printf("lat: %f, lon: %f\n", lat, lon);
+    #endif
 
     return 1;
     
