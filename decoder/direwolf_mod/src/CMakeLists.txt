@@ -5,6 +5,7 @@
 include_directories(
   ${GPSD_INCLUDE_DIRS}
   ${HAMLIB_INCLUDE_DIRS}
+  ${CUSTOM_LIBFEC_DIR}
   ${ALSA_INCLUDE_DIRS}
   ${UDEV_INCLUDE_DIRS}
   ${PORTAUDIO_INCLUDE_DIRS}
@@ -148,6 +149,7 @@ add_executable(direwolf
 
 target_link_libraries(direwolf
   ${GEOTRANZ_LIBRARIES}
+  ${LIBFEC_LIBRARIES}
   ${JSON_C_MASTER_LIBRARIES}
   ${MISC_LIBRARIES}
   ${REGEX_LIBRARIES}
@@ -382,6 +384,7 @@ add_executable(atest
 target_link_libraries(atest
   ${MISC_LIBRARIES}
   ${JSON_C_MASTER_LIBRARIES}
+  ${LIBFEC_LIBRARIES}
   ${GPSD_LIBRARIES}
   ${REGEX_LIBRARIES}
   Threads::Threads

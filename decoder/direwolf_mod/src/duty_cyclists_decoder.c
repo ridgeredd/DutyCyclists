@@ -3,7 +3,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "duty_cyclists_decoder.h"
-#include "fx25.h"
+//#include "fx25.h"
+#include "fec.h"
 #include "json_object.h"
 #include "gpsToJSON.c"
 #include <time.h>
@@ -18,7 +19,8 @@ const uint8_t DUTY_CYCLISTS_RADIO_ID = 0x67;
 #define TRANSMISSION_BYTES             PAYLOAD_BYTES + PARITY_BYTES + START_NBYTES + END_NBYTES
 
 static int is_rs_init = 0;
-static struct rs *rs_encoder = NULL;
+//static struct rs *rs_encoder = NULL;
+static void* rs_encoder = NULL;
 
 //const static char[] filename = "gps_data/{}.json";
 
@@ -28,15 +30,14 @@ static void init_rs() {
 
     // Initialize reed-solomon encoder. Requirements for library specified here: 
     // https://manpages.debian.org/unstable/libfec-dev/rs.3.en.html?utm_source=chatgpt.com
-    rs_encoder = INIT_RS(
+    rs_encoder = init_rs_char(
         8, // gives the symbol size in bits, up to 32
         0x11D, // gives the extended Galois field generator polynomial coefficients, with the 0th coefficient in the low order bit. The polynomial must be primitive; if not, the call will fail and NULL will be returned.
 		0, // gives, in index form, the first consecutive root of the Reed Solomon code generator polynomial
         1, // gives, in index form, the primitive element in the Galois field used to generate the Reed Solomon code generator polynomial.
-        PARITY_BYTES // gives the number of roots in the Reed Solomon code generator polynomial. This equals the number of parity symbols per code block.
-		//255 - PARITY_BYTES - PAYLOAD_BYTES // gives the number of leading symbols in the codeword that are implicitly padded to zero in a shortened code block.
+        PARITY_BYTES, // gives the number of roots in the Reed Solomon code generator polynomial. This equals the number of parity symbols per code block.
+		255 - PARITY_BYTES - PAYLOAD_BYTES); // gives the number of leading symbols in the codeword that are implicitly padded to zero in a shortened code block.
         // The resulting Reed-Solomon code has parameters (N,K), where N = 2^symsize - pad - 1 and K = N-nroots.
-    );
 }
 
 
@@ -53,7 +54,7 @@ int duty_cyclists_decode(unsigned char frame[], int frame_len) {
 
     if ( frame_len != DUTY_CYCLISTS_PACKET_LEN ) { return 0; }
 
-    int success = DECODE_RS(rs_encoder, frame, NULL, 0);
+    int success = decode_rs_char(rs_encoder, frame, NULL, 0);
 
     if( !success ) { return 0; }
 
