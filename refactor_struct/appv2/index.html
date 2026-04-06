@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPS Marker Map</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>GPS Marker Map</h1>
+        </div>
+        
+        <div class="input-panel">
+            <div class="input-group">
+                <label for="latitude">Latitude:</label>
+                <input type="number" id="latitude" step="any" placeholder="e.g., 40.7128">
+            </div>
+            <div class="input-group">
+                <label for="longitude">Longitude:</label>
+                <input type="number" id="longitude" step="any" placeholder="e.g., -74.0060">
+            </div>
+            <button id="addMarker" class="btn-primary">Add Marker</button>
+            <button id="clearMarkers" class="btn-secondary">Clear All Markers</button>
+        </div>
+
+        <div id="map"></div>
+        
+        <div class="info-panel">
+            <h3>Instructions:</h3>
+            <ul>
+                <li>Enter latitude and longitude coordinates</li>
+                <li>Click "Add Marker" to place it on the map</li>
+                <li>Click any marker to view its details</li>
+                <li>Markers are stored in your browser</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

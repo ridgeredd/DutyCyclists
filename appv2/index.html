@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPS Marker Map</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>GPS Marker Map</h1>
+        </div>
+        <div class="info-panel">
+            <h3>Instructions:</h3>
+            <ul>
+                <li>Each marker represents a different rider</li>
+                <li>Click a marker to view its details</li>
+                <li>Markers are added automatically based on GPS data</li>
+                <li>Use the "Refresh Loaded Markers" button to reload markers for the most recent data</li>
+                
+            </ul>
+            Refresh the map to update loaded markers.
+            <button id="clearMarkers" class="btn-secondary">Refresh Loaded Markers</button>
+
+        </div>
+
+        <!-- <div class="input-panel">
+            <div class="input-group">
+                <label for="latitude">Latitude:</label>
+                <input type="number" id="latitude" step="any" placeholder="e.g., 40.7128">
+            </div>
+            <div class="input-group">
+                <label for="longitude">Longitude:</label>
+                <input type="number" id="longitude" step="any" placeholder="e.g., -74.0060">
+            </div>
+            <button id="addMarker" class="btn-primary">Add Marker</button>
+            <button id="clearMarkers" class="btn-secondary">Clear All Markers</button>
+        </div> -->
+
+        <div id="map"></div>
+        
+        
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

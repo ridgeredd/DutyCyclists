@@ -9,7 +9,8 @@ __pycache__/
 *.d
 
 # Ignore build folders
-esp32/build
+/esp32/build
+.vscode
 
 # Ignore IDE settings
 # esp32/.vscode
@@ -19,3 +20,77 @@ esp32/build
 
 sdkconfig.old
 sdkconfig.ci
+/esp32/sdkconfig
+
+# FROM DIREWOLF
+
+# Custom
+*.docx
+z*
+*.log
+*bak*
+*~
+*.xlsx
+*.stackdump
+*.wav
+
+
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+# Binaries, other build results
+
+/decoder/direwolf_mod/build
+/decoder/direwolf_mod/.github
+/decoder/direwolf_mod/.vscode
+
+# =========================
+# Operating System Files
+# =========================
+
+# OSX
+# =========================
+
+# Thumbnails
+._*
+
+# Windows Installer files
+*.cab
+*.msi
+*.msm
+*.msp
+
+# Windows shortcuts
+*.lnk
+/use_this_sdk
+*.dSYM
+
+#GPS Data jsons
+/appv2/GPSData/*.jsons

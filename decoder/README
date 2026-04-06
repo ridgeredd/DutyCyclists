@@ -1,0 +1,39 @@
+INFO
+
+- this is an altered version of direwolf https://github.com/wb2osz/direwolf/tree/master/src
+
+DIREWOLF CHANGES
+
+- redefined packet length in hdlc_rec2, hdlc_rec, rrdb
+- adding custom decoding in duty_cyclists_decoder
+- bypassed crc check (error detection) and multi_modem_process_rec_frame (sends frame for ax25) from try_decode2() in hdlc_rec2
+- added libfec to external 
+
+TODO
+
+- write to json
+- see known issues
+
+Duty Cyclists packet standard:
+_________________________________________________________________________
+|               |               |               |                       |
+|   Byte 0      |   Bytes 1-5   |   Bytes 6-10  |   Bytes 11-17         |
+|   Radio ID    |   Latitude    |   Longitude   |   Error Correction    |
+|_______________|_______________|_______________|_______________________|
+
+SETUP
+
+- follow instructions on page 26 of https://github.com/wb2osz/direwolf/blob/master/doc/User-Guide.pdf
+- paste this into build/direwolf.conf "MODEM 120 1200 2200" to replace "MODEM"
+- "ADEVICE 2- USB Audio Device" may also be necessary to connect digirig, but most likely it will autoconfigure
+
+RUN
+
+- cd decoder/direwolf_mod/build
+- ./src/direwolf.exe
+
+KNOWN ISSUES
+
+- packets drop. May be because we don't do any parity checking before RS decoding. e.g. error detection before error correction
+- after some time, it will terminate. unsure why. occasionally throws error but I have had success re-running until it works
+- too much noise or double transmission when ptt-press is enabled. currently only working on auto transmission only (ptt edge detection disabled)
